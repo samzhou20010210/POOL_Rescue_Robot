@@ -15,6 +15,9 @@
 """
 Start the simulation demo in one of three modes.
 
+All modes also start robot_state_publisher, which shares the ROV model
+(rov_description) with RViz2.
+
 Default (no arguments): click-to-drive in a straight line.
     sim_node, controller_node, mission_node, RViz2 (Fixed Frame: odom).
 
@@ -62,12 +65,28 @@ def launch_setup(context):
     rviz_config = os.path.join(
         share_dir, 'rviz', 'planning_preview.rviz' if use_planner else 'sim_nav.rviz')
 
+    # Visual-only ROV model from the installed rov_description package.
+    urdf_file = os.path.join(
+        get_package_share_directory('rov_description'), 'urdf', 'rov.urdf')
+    with open(urdf_file, 'r') as f:
+        robot_description = f.read()
+
     actions = [
         Node(
             package='rov_simulation',
             executable='sim_node',
             name='sim_node',
             output='screen',
+        ),
+        # Publishes the model on "robot_description" for RViz's RobotModel
+        # display. The model has only base_link, so this node adds no TF;
+        # sim_node still publishes odom -> base_link.
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='robot_state_publisher',
+            output='screen',
+            parameters=[{'robot_description': robot_description}],
         ),
         # output='screen' prints the mission logs in this launch terminal.
         Node(

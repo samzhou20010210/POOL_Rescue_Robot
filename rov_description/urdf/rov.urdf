@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+  Visual-only description of the V4 ROV.
+
+  base_link is the CAD origin (hull envelope centre). The CAD frame already
+  follows ROS conventions: x forward, y left (port), z up, units in metres.
+  So the mesh is attached with no offset, no rotation, and scale 1.
+
+  There are no joints, collisions, or inertias: sim_node publishes the
+  odom -> base_link transform, and this file only tells RViz what to draw.
+  To use a more detailed model later, replace the mesh below and keep the
+  link name base_link.
+-->
+<robot name="rov">
+  <material name="hull_grey">
+    <color rgba="0.6 0.6 0.6 1.0"/>
+  </material>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://rov_description/meshes/ROV_V4.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="hull_grey"/>
+    </visual>
+  </link>
+</robot>

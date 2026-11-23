@@ -17,7 +17,9 @@
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>nav2_navfn_planner</exec_depend>
   <exec_depend>nav2_planner</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rov_control</exec_depend>
+  <exec_depend>rov_description</exec_depend>
   <exec_depend>rov_mission</exec_depend>
   <exec_depend>rov_simulation</exec_depend>
   <exec_depend>rviz2</exec_depend>
