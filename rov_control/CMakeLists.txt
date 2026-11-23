@@ -12,6 +12,9 @@ find_package(rclcpp_action REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 add_executable(controller_node src/controller_node.cpp)
 target_compile_features(controller_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
@@ -22,6 +25,9 @@ ament_target_dependencies(
   "geometry_msgs"
   "nav_msgs"
   "nav2_msgs"
+  "tf2"
+  "tf2_geometry_msgs"
+  "tf2_ros"
 )
 
 install(TARGETS controller_node

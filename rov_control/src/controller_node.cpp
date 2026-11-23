@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// controller_node: drives the planar simulator to one goal pose.
+// controller_node: drives the planar simulator along a path.
 //
-// It offers a "follow_path" action (nav2_msgs/action/FollowPath). For this
-// milestone the path must contain exactly ONE pose in the odom frame.
+// It offers a "follow_path" action (nav2_msgs/action/FollowPath). The path
+// can have one pose (drive straight to it) or many poses in order (for
+// example a route from Nav2's planner that goes around obstacles).
 // On every timer tick the node:
-//   1. stops if the goal was canceled or odometry is stale,
-//   2. drives toward the target position (turning first if needed),
-//   3. once close enough, turns in place to the requested final yaw,
+//   1. stops if the goal was canceled, odometry is stale, or the robot pose
+//      cannot be transformed into the path's frame,
+//   2. steers toward a "target point" on the path a short distance ahead,
+//      moving that point forward along the path in order,
+//   3. once close enough to the last pose, turns in place to its yaw,
 //   4. publishes zero velocity and reports success.
 //
 // No callback ever waits or sleeps: the action callbacks only store the
@@ -31,13 +34,19 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav2_msgs/action/follow_path.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "tf2/exceptions.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2_ros/buffer.hpp"
+#include "tf2_ros/transform_listener.hpp"
 
 namespace rov_control
 {
@@ -57,6 +66,14 @@ double NormalizeAngle(double angle)
   return std::atan2(std::sin(angle), std::cos(angle));
 }
 
+// A 2D pose: position and heading.
+struct Pose2D
+{
+  double x = 0.0;
+  double y = 0.0;
+  double yaw = 0.0;
+};
+
 class ControllerNode : public rclcpp::Node
 {
 public:
@@ -64,7 +81,6 @@ public:
   : Node("controller_node")
   {
     const double control_rate_hz = declare_parameter("control_rate_hz", 20.0);
-    odom_frame_id_ = declare_parameter("odom_frame_id", std::string("odom"));
     position_tolerance_ = declare_parameter("position_tolerance", 0.10);  // m
     yaw_tolerance_ = declare_parameter("yaw_tolerance", 0.05);  // rad
     max_linear_speed_ = declare_parameter("max_linear_speed", 0.5);  // m/s
@@ -73,10 +89,18 @@ public:
     angular_gain_ = declare_parameter("angular_gain", 2.0);
     // If the heading error is larger than this, turn in place before driving.
     turn_in_place_angle_ = declare_parameter("turn_in_place_angle", 0.5);  // rad
+    // How far ahead on the path the robot aims. Small values follow the
+    // path closely (keeping the turns around obstacles).
+    lookahead_distance_ = declare_parameter("lookahead_distance", 0.3);  // m
     odom_timeout_sec_ = declare_parameter("odom_timeout_sec", 0.5);
-    if (control_rate_hz <= 0.0 || odom_timeout_sec_ <= 0.0) {
-      throw std::invalid_argument("control_rate_hz and odom_timeout_sec must be positive");
+    if (control_rate_hz <= 0.0 || odom_timeout_sec_ <= 0.0 || lookahead_distance_ <= 0.0) {
+      throw std::invalid_argument(
+              "control_rate_hz, odom_timeout_sec and lookahead_distance must be positive");
     }
+
+    // TF: used to express the robot pose in the path's frame (e.g. map).
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
+    tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 
     // Relative names, so they follow the node's namespace.
     odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -101,7 +125,7 @@ public:
 private:
   enum class Phase
   {
-    kDriveToPosition,
+    kFollowPath,
     kAlignYaw,
   };
 
@@ -116,9 +140,9 @@ private:
 
   void OnOdom(const nav_msgs::msg::Odometry & odom)
   {
-    x_ = odom.pose.pose.position.x;
-    y_ = odom.pose.pose.position.y;
-    yaw_ = YawFromQuaternion(odom.pose.pose.orientation);
+    // Keep the whole pose with its frame, so it can be transformed later.
+    robot_pose_odom_.header = odom.header;
+    robot_pose_odom_.pose = odom.pose.pose;
     // Time of arrival on this node's clock, used to detect stale odometry.
     last_odom_time_ = now();
     has_odom_ = true;
@@ -126,27 +150,30 @@ private:
 
   // ---- Action server callbacks (all quick, never blocking) ----
 
-  // Decide whether to accept a new goal. Only a single odom-frame pose is supported.
+  // Decide whether to accept a new goal.
   rclcpp_action::GoalResponse OnGoalRequest(const FollowPath::Goal & goal)
   {
-    const auto & poses = goal.path.poses;
-    if (poses.size() != 1) {
-      RCLCPP_WARN(
-        get_logger(), "Rejecting goal: path has %zu poses, only 1 is supported", poses.size());
+    const auto & path = goal.path;
+    if (path.poses.empty()) {
+      RCLCPP_WARN(get_logger(), "Rejecting goal: path is empty");
       return rclcpp_action::GoalResponse::REJECT;
     }
-    // The pose's own frame wins; an empty pose frame means "same as the path".
-    const std::string & frame_id = poses[0].header.frame_id.empty() ?
-      goal.path.header.frame_id : poses[0].header.frame_id;
-    if (frame_id != odom_frame_id_) {
-      RCLCPP_WARN(
-        get_logger(), "Rejecting goal: frame '%s' is not supported, use '%s'",
-        frame_id.c_str(), odom_frame_id_.c_str());
+    if (path.header.frame_id.empty()) {
+      RCLCPP_WARN(get_logger(), "Rejecting goal: path has no frame_id");
       return rclcpp_action::GoalResponse::REJECT;
     }
-    const auto & q = poses[0].pose.orientation;
+    // Every pose must be in the path's frame (an empty pose frame means "same as the path").
+    for (const auto & pose : path.poses) {
+      if (!pose.header.frame_id.empty() && pose.header.frame_id != path.header.frame_id) {
+        RCLCPP_WARN(
+          get_logger(), "Rejecting goal: pose frame '%s' differs from path frame '%s'",
+          pose.header.frame_id.c_str(), path.header.frame_id.c_str());
+        return rclcpp_action::GoalResponse::REJECT;
+      }
+    }
+    const auto & q = path.poses.back().pose.orientation;
     if (q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w < 1e-6) {
-      RCLCPP_WARN(get_logger(), "Rejecting goal: orientation quaternion is all zeros");
+      RCLCPP_WARN(get_logger(), "Rejecting goal: final orientation quaternion is all zeros");
       return rclcpp_action::GoalResponse::REJECT;
     }
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -167,14 +194,19 @@ private:
         FollowPath::Result::UNKNOWN, "Replaced by a newer goal", GoalOutcome::kAborted);
     }
 
-    const auto & target = goal_handle->get_goal()->path.poses[0].pose;
-    target_x_ = target.position.x;
-    target_y_ = target.position.y;
-    target_yaw_ = YawFromQuaternion(target.orientation);
-    phase_ = Phase::kDriveToPosition;
+    const auto & path = goal_handle->get_goal()->path;
+    path_frame_id_ = path.header.frame_id;
+    path_.clear();
+    for (const auto & pose : path.poses) {
+      path_.push_back(
+        {pose.pose.position.x, pose.pose.position.y, YawFromQuaternion(pose.pose.orientation)});
+    }
+    target_index_ = 0;
+    phase_ = Phase::kFollowPath;
     active_goal_ = goal_handle;
     RCLCPP_INFO(
-      get_logger(), "New goal: x=%.2f, y=%.2f, yaw=%.2f rad", target_x_, target_y_, target_yaw_);
+      get_logger(), "New goal: %zu poses in '%s', final x=%.2f, y=%.2f, yaw=%.2f rad",
+      path_.size(), path_frame_id_.c_str(), path_.back().x, path_.back().y, path_.back().yaw);
   }
 
   // ---- Control loop ----
@@ -198,27 +230,45 @@ private:
       return;
     }
 
-    const double dx = target_x_ - x_;
-    const double dy = target_y_ - y_;
-    const double distance = std::hypot(dx, dy);
+    Pose2D robot;
+    std::string tf_error;
+    if (!GetRobotPoseInPathFrame(robot, tf_error)) {
+      FinishGoal(FollowPath::Result::TF_ERROR, tf_error, GoalOutcome::kAborted);
+      return;
+    }
+
+    const Pose2D & final_pose = path_.back();
+    const double distance_to_goal = std::hypot(final_pose.x - robot.x, final_pose.y - robot.y);
 
     geometry_msgs::msg::Twist cmd;  // All fields start at zero.
 
-    if (phase_ == Phase::kDriveToPosition) {
-      if (distance <= position_tolerance_) {
+    if (phase_ == Phase::kFollowPath) {
+      // Move the target forward along the path (in order) while it is
+      // closer than the lookahead distance. The last pose is never skipped.
+      const size_t last_index = path_.size() - 1;
+      while (target_index_ < last_index &&
+        DistanceTo(robot, path_[target_index_]) < lookahead_distance_)
+      {
+        ++target_index_;
+      }
+
+      if (target_index_ == last_index && distance_to_goal <= position_tolerance_) {
         phase_ = Phase::kAlignYaw;  // Close enough; now only fix the heading.
       } else {
-        const double heading_error = NormalizeAngle(std::atan2(dy, dx) - yaw_);
+        const Pose2D & target = path_[target_index_];
+        const double heading_error =
+          NormalizeAngle(std::atan2(target.y - robot.y, target.x - robot.x) - robot.yaw);
         cmd.angular.z = angular_gain_ * heading_error;
-        // Drive forward only when roughly facing the target.
+        // Drive forward only when roughly facing the target. Slow down
+        // near the end of the path.
         if (std::abs(heading_error) < turn_in_place_angle_) {
-          cmd.linear.x = linear_gain_ * distance * std::cos(heading_error);
+          cmd.linear.x = linear_gain_ * distance_to_goal * std::cos(heading_error);
         }
       }
     }
 
     if (phase_ == Phase::kAlignYaw) {
-      const double yaw_error = NormalizeAngle(target_yaw_ - yaw_);
+      const double yaw_error = NormalizeAngle(final_pose.yaw - robot.yaw);
       if (std::abs(yaw_error) <= yaw_tolerance_) {
         FinishGoal(FollowPath::Result::NONE, "", GoalOutcome::kSucceeded);
         return;
@@ -231,9 +281,34 @@ private:
     cmd_vel_publisher_->publish(cmd);
 
     auto feedback = std::make_shared<FollowPath::Feedback>();
-    feedback->distance_to_goal = static_cast<float>(distance);
+    feedback->distance_to_goal = static_cast<float>(distance_to_goal);
     feedback->speed = static_cast<float>(cmd.linear.x);
     active_goal_->publish_feedback(feedback);
+  }
+
+  // Express the latest odometry pose in the path's frame using TF.
+  // Returns false (and fills error) if the transform is not available.
+  bool GetRobotPoseInPathFrame(Pose2D & robot, std::string & error)
+  {
+    geometry_msgs::msg::PoseStamped pose_in_path_frame;
+    try {
+      // Latest available transform; lookupTransform does not wait here.
+      const auto transform = tf_buffer_->lookupTransform(
+        path_frame_id_, robot_pose_odom_.header.frame_id, tf2::TimePointZero);
+      tf2::doTransform(robot_pose_odom_, pose_in_path_frame, transform);
+    } catch (const tf2::TransformException & ex) {
+      error = "Cannot transform robot pose into '" + path_frame_id_ + "': " + ex.what();
+      return false;
+    }
+    robot.x = pose_in_path_frame.pose.position.x;
+    robot.y = pose_in_path_frame.pose.position.y;
+    robot.yaw = YawFromQuaternion(pose_in_path_frame.pose.orientation);
+    return true;
+  }
+
+  static double DistanceTo(const Pose2D & a, const Pose2D & b)
+  {
+    return std::hypot(b.x - a.x, b.y - a.y);
   }
 
   // Stop the robot, report the result, and forget the goal.
@@ -262,7 +337,6 @@ private:
   }
 
   // Settings (from parameters).
-  std::string odom_frame_id_;
   double position_tolerance_;
   double yaw_tolerance_;
   double max_linear_speed_;
@@ -270,23 +344,24 @@ private:
   double linear_gain_;
   double angular_gain_;
   double turn_in_place_angle_;
+  double lookahead_distance_;
   double odom_timeout_sec_;
 
-  // Latest odometry.
+  // Latest odometry (in the odom frame).
   bool has_odom_ = false;
-  double x_ = 0.0;
-  double y_ = 0.0;
-  double yaw_ = 0.0;
+  geometry_msgs::msg::PoseStamped robot_pose_odom_;
   rclcpp::Time last_odom_time_;
 
   // Active goal (empty when idle).
   std::shared_ptr<GoalHandle> active_goal_;
-  double target_x_ = 0.0;
-  double target_y_ = 0.0;
-  double target_yaw_ = 0.0;
-  Phase phase_ = Phase::kDriveToPosition;
+  std::string path_frame_id_;
+  std::vector<Pose2D> path_;
+  size_t target_index_ = 0;
+  Phase phase_ = Phase::kFollowPath;
 
   // ROS interfaces, kept as members so they stay alive.
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscription_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
   rclcpp_action::Server<FollowPath>::SharedPtr action_server_;

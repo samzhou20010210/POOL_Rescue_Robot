@@ -1,5 +1,7 @@
-# Nav2 parameters for the planning preview (sim_nav.launch.py planning_preview:=true).
-# Only global planning is used: map_server + planner_server, no controller.
+# Nav2 parameters for the map-based modes of sim_nav.launch.py
+# (planning_preview:=true and planned_drive:=true).
+# Only Nav2's global planning is used (map_server + planner_server); driving
+# is done by rov_control's controller_node in planned_drive mode.
 
 map_server:
   ros__parameters:
