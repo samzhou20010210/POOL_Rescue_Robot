@@ -22,7 +22,8 @@
 //      cannot be transformed into the path's frame,
 //   2. steers toward a "target point" on the path a short distance ahead,
 //      moving that point forward along the path in order,
-//   3. once close enough to the last pose, turns in place to its yaw,
+//   3. once the target point is the last pose and the robot is close enough
+//      to it, turns in place to its yaw,
 //   4. publishes zero velocity and reports success.
 //
 // No callback ever waits or sleeps: the action callbacks only store the
@@ -201,6 +202,12 @@ private:
       path_.push_back(
         {pose.pose.position.x, pose.pose.position.y, YawFromQuaternion(pose.pose.orientation)});
     }
+    // length_to_end_[i] = path length from pose i to the last pose. Used for
+    // the speed, so a route that ends near its start is still driven at speed.
+    length_to_end_.assign(path_.size(), 0.0);
+    for (size_t i = path_.size() - 1; i > 0; --i) {
+      length_to_end_[i - 1] = length_to_end_[i] + DistanceTo(path_[i - 1], path_[i]);
+    }
     target_index_ = 0;
     phase_ = Phase::kFollowPath;
     active_goal_ = goal_handle;
@@ -238,8 +245,6 @@ private:
     }
 
     const Pose2D & final_pose = path_.back();
-    const double distance_to_goal = std::hypot(final_pose.x - robot.x, final_pose.y - robot.y);
-
     geometry_msgs::msg::Twist cmd;  // All fields start at zero.
 
     if (phase_ == Phase::kFollowPath) {
@@ -252,17 +257,20 @@ private:
         ++target_index_;
       }
 
-      if (target_index_ == last_index && distance_to_goal <= position_tolerance_) {
+      // Finish driving only on the final segment (target is the last pose),
+      // so a route that passes near its end point earlier is not cut short.
+      const bool on_final_segment = target_index_ == last_index;
+      if (on_final_segment && DistanceTo(robot, final_pose) <= position_tolerance_) {
         phase_ = Phase::kAlignYaw;  // Close enough; now only fix the heading.
       } else {
         const Pose2D & target = path_[target_index_];
         const double heading_error =
           NormalizeAngle(std::atan2(target.y - robot.y, target.x - robot.x) - robot.yaw);
         cmd.angular.z = angular_gain_ * heading_error;
-        // Drive forward only when roughly facing the target. Slow down
-        // near the end of the path.
+        // Drive forward only when roughly facing the target. Slow down as
+        // the distance left along the route gets small.
         if (std::abs(heading_error) < turn_in_place_angle_) {
-          cmd.linear.x = linear_gain_ * distance_to_goal * std::cos(heading_error);
+          cmd.linear.x = linear_gain_ * RemainingDistance(robot) * std::cos(heading_error);
         }
       }
     }
@@ -281,7 +289,7 @@ private:
     cmd_vel_publisher_->publish(cmd);
 
     auto feedback = std::make_shared<FollowPath::Feedback>();
-    feedback->distance_to_goal = static_cast<float>(distance_to_goal);
+    feedback->distance_to_goal = static_cast<float>(RemainingDistance(robot));
     feedback->speed = static_cast<float>(cmd.linear.x);
     active_goal_->publish_feedback(feedback);
   }
@@ -309,6 +317,12 @@ private:
   static double DistanceTo(const Pose2D & a, const Pose2D & b)
   {
     return std::hypot(b.x - a.x, b.y - a.y);
+  }
+
+  // Distance left along the route: robot -> target point -> ... -> last pose.
+  double RemainingDistance(const Pose2D & robot) const
+  {
+    return DistanceTo(robot, path_[target_index_]) + length_to_end_[target_index_];
   }
 
   // Stop the robot, report the result, and forget the goal.
@@ -356,6 +370,7 @@ private:
   std::shared_ptr<GoalHandle> active_goal_;
   std::string path_frame_id_;
   std::vector<Pose2D> path_;
+  std::vector<double> length_to_end_;
   size_t target_index_ = 0;
   Phase phase_ = Phase::kFollowPath;
 

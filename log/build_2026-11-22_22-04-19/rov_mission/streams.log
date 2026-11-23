@@ -1,0 +1,65 @@
+[0.008s] Invoking command in '/home/sam/main/pr_robot/rov_ws/src/build/rov_mission': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/sam/main/pr_robot/rov_ws/src/rov_mission -DCMAKE_INSTALL_PREFIX=/home/sam/main/pr_robot/rov_ws/src/install/rov_mission
+[0.051s] -- The C compiler identification is GNU 13.3.0
+[0.092s] -- The CXX compiler identification is GNU 13.3.0
+[0.113s] -- Detecting C compiler ABI info
+[0.188s] -- Detecting C compiler ABI info - done
+[0.194s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.194s] -- Detecting C compile features
+[0.195s] -- Detecting C compile features - done
+[0.202s] -- Detecting CXX compiler ABI info
+[0.282s] -- Detecting CXX compiler ABI info - done
+[0.292s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.292s] -- Detecting CXX compile features
+[0.293s] -- Detecting CXX compile features - done
+[0.296s] -- Found ament_cmake: 2.5.7 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.409s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[0.497s] -- Found rclcpp: 28.1.23 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.533s] -- Found rosidl_generator_c: 4.6.10 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.544s] -- Found rosidl_generator_cpp: 4.6.10 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.556s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.571s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.630s] -- Found rmw_implementation_cmake: 7.3.4 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[0.633s] -- Found rmw_fastrtps_cpp: 8.4.5 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[0.697s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[0.716s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[0.737s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.801s] -- Found geometry_msgs: 5.3.8 (/opt/ros/jazzy/share/geometry_msgs/cmake)
+[0.826s] -- Found rclcpp_action: 28.1.23 (/opt/ros/jazzy/share/rclcpp_action/cmake)
+[0.860s] -- Found nav2_msgs: 1.3.14 (/opt/ros/jazzy/share/nav2_msgs/cmake)
+[0.950s] -- Found ament_lint_auto: 0.17.5 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[1.032s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[1.032s] -- Configured cppcheck include dirs: $<BUILD_INTERFACE:/home/sam/main/pr_robot/rov_ws/src/rov_mission/include>
+[1.032s] -- Configured cppcheck exclude dirs and/or files: 
+[1.032s] -- Added test 'lint_cmake' to check CMake code style
+[1.033s] -- Added test 'uncrustify' to check C / C++ code style
+[1.033s] -- Configured uncrustify additional arguments: 
+[1.033s] -- Added test 'xmllint' to check XML markup files
+[1.034s] -- Configuring done (1.0s)
+[1.043s] -- Generating done (0.0s)
+[1.046s] -- Build files have been written to: /home/sam/main/pr_robot/rov_ws/src/build/rov_mission
+[1.053s] Invoked command in '/home/sam/main/pr_robot/rov_ws/src/build/rov_mission' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/sam/main/pr_robot/rov_ws/src/rov_mission -DCMAKE_INSTALL_PREFIX=/home/sam/main/pr_robot/rov_ws/src/install/rov_mission
+[1.054s] Invoking command in '/home/sam/main/pr_robot/rov_ws/src/build/rov_mission': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/sam/main/pr_robot/rov_ws/src/build/rov_mission -- -j32 -l32
+[1.092s] [ 50%] [32mBuilding CXX object CMakeFiles/mission_node.dir/src/mission_node.cpp.o[0m
+[6.830s] [100%] [32m[1mLinking CXX executable mission_node[0m
+[7.090s] [100%] Built target mission_node
+[7.099s] Invoked command in '/home/sam/main/pr_robot/rov_ws/src/build/rov_mission' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/sam/main/pr_robot/rov_ws/src/build/rov_mission -- -j32 -l32
+[7.100s] Invoking command in '/home/sam/main/pr_robot/rov_ws/src/build/rov_mission': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/sam/main/pr_robot/rov_ws/src/build/rov_mission
+[7.107s] -- Install configuration: ""
+[7.107s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/lib/rov_mission/mission_node
+[7.110s] -- Set non-toolchain portion of runtime path of "/home/sam/main/pr_robot/rov_ws/src/install/rov_mission/lib/rov_mission/mission_node" to ""
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/ament_index/resource_index/package_run_dependencies/rov_mission
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/ament_index/resource_index/parent_prefix_path/rov_mission
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/environment/ament_prefix_path.sh
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/environment/ament_prefix_path.dsv
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/environment/path.sh
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/environment/path.dsv
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/local_setup.bash
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/local_setup.sh
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/local_setup.zsh
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/local_setup.dsv
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/package.dsv
+[7.111s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/ament_index/resource_index/packages/rov_mission
+[7.112s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/cmake/rov_missionConfig.cmake
+[7.112s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/cmake/rov_missionConfig-version.cmake
+[7.112s] -- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_mission/share/rov_mission/package.xml
+[7.113s] Invoked command in '/home/sam/main/pr_robot/rov_ws/src/build/rov_mission' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/sam/main/pr_robot/rov_ws/src/build/rov_mission

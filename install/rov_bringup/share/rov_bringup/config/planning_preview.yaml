@@ -1,0 +1,46 @@
+# Nav2 parameters for the map-based modes of sim_nav.launch.py
+# (planning_preview:=true and planned_drive:=true).
+# Only Nav2's global planning is used (map_server + planner_server); driving
+# is done by rov_control's controller_node in planned_drive mode.
+
+map_server:
+  ros__parameters:
+    # yaml_filename is set by the launch file (installed maps/preview_map.yaml).
+    topic_name: map
+    frame_id: map
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.0        # Do not accept a nearby point instead of the goal.
+      use_astar: false
+      allow_unknown: false
+
+# planner_server creates this costmap as a child node.
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      resolution: 0.05
+      robot_radius: 0.3
+      track_unknown_space: true
+      always_send_full_costmap: true
+      plugins: ["static_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.5
+        cost_scaling_factor: 3.0
+
+lifecycle_manager_planning:
+  ros__parameters:
+    autostart: true
+    node_names: ["map_server", "planner_server"]

@@ -1,0 +1,50 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.7 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Found ament_lint_auto: 0.17.5 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+-- Added test 'copyright' to check source files copyright and LICENSE
+-- Added test 'flake8' to check Python code syntax and style conventions
+-- Configured 'flake8' exclude dirs and/or files: 
+-- Added test 'lint_cmake' to check CMake code style
+-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+-- Added test 'xmllint' to check XML markup files
+-- Configuring done (0.7s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sam/main/pr_robot/rov_ws/src/build/rov_bringup
+-- Install configuration: ""
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/launch
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/launch/sim_nav.launch.py
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/rviz
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/rviz/planning_preview.rviz
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/rviz/sim_nav.rviz
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/config
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/config/planning_preview.yaml
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/maps
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/maps/preview_map.yaml
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/maps/preview_map.pgm
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/ament_index/resource_index/package_run_dependencies/rov_bringup
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/ament_index/resource_index/parent_prefix_path/rov_bringup
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/environment/ament_prefix_path.sh
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/environment/ament_prefix_path.dsv
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/environment/path.sh
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/environment/path.dsv
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/local_setup.bash
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/local_setup.sh
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/local_setup.zsh
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/local_setup.dsv
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/package.dsv
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/ament_index/resource_index/packages/rov_bringup
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/cmake/rov_bringupConfig.cmake
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/cmake/rov_bringupConfig-version.cmake
+-- Installing: /home/sam/main/pr_robot/rov_ws/src/install/rov_bringup/share/rov_bringup/package.xml
