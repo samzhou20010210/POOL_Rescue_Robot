@@ -1,0 +1,30 @@
+# ros_gz_bridge topics for sim_nav.launch.py backend:=gazebo.
+# ROS names are relative (resolved in the bridge's namespace, "/" by default).
+
+# Gazebo simulation time -> ROS. All ROS nodes use it (use_sim_time).
+- ros_topic_name: "clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+# controller_node velocity commands -> the ROV's VelocityControl plugin.
+- ros_topic_name: "cmd_vel"
+  gz_topic_name: "/model/rov_v4/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ
+
+# The ROV's actual motion -> ROS odometry (frame odom, child base_link).
+- ros_topic_name: "odom"
+  gz_topic_name: "/model/rov_v4/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# The same pose as the odom -> base_link transform.
+- ros_topic_name: "tf"
+  gz_topic_name: "/model/rov_v4/odometry_tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS

@@ -3,7 +3,7 @@
 <package format="3">
   <name>rov_description</name>
   <version>0.0.0</version>
-  <description>Visual-only URDF and mesh of the V4 ROV.</description>
+  <description>Visual-only URDF, mesh, and thruster layout of the V4 ROV.</description>
   <maintainer email="samzhou20010210@gmail.com">sam</maintainer>
   <license>Apache-2.0</license>
 

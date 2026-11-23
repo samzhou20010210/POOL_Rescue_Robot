@@ -5,7 +5,8 @@
 
 map_server:
   ros__parameters:
-    # yaml_filename is set by the launch file (installed maps/preview_map.yaml).
+    # yaml_filename is set by the launch file (map_yaml argument; default is
+    # the installed maps/preview_map.yaml).
     topic_name: map
     frame_id: map
 

@@ -3,9 +3,10 @@ project(rov_bringup)
 
 find_package(ament_cmake REQUIRED)
 
-# Install launch files, RViz configs, Nav2 parameters, and maps into
-# share/rov_bringup/ so "ros2 launch rov_bringup ..." can find them.
-install(DIRECTORY launch rviz config maps
+# Install launch files, RViz configs, Nav2 parameters, maps, and Gazebo
+# worlds and models into share/rov_bringup/ so "ros2 launch rov_bringup ..."
+# can find them.
+install(DIRECTORY launch rviz config maps worlds models
   DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)

@@ -1,0 +1,15 @@
+# Empty rectangular pool (52 m x 27 m map, 5 cm per pixel, 1040 x 540 cells).
+# - Pool interior (free): x from -25 to 25 m, y from -12.5 to 12.5 m
+#   (50 m x 25 m), centred on the map origin (0, 0), no obstacles.
+#   The robot starts in the bottom-left corner at (-24, -11.5), set by
+#   DEFAULT_START in launch/sim_nav.launch.py.
+# - A 1 m occupied border on all sides (pool walls), so goals outside the
+#   pool are rejected by the planner.
+# RViz uses rviz/pool_map.rviz (same name as this file) to show the whole pool.
+image: pool_map.pgm
+mode: trinary
+resolution: 0.05
+origin: [-26.0, -13.5, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

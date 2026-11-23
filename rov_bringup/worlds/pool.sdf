@@ -1,0 +1,312 @@
+<?xml version="1.0"?>
+<!--
+  Pool world for Gazebo Harmonic (no water physics, no thrusters). Used by
+  pool_gazebo.launch.py (scene only) and sim_nav.launch.py backend:=gazebo.
+
+  World frame: origin (0, 0, 0) is the bottom-left corner of the pool
+  interior at the water surface. x along the 50 m side, y along the 25 m
+  side, z up.
+    Interior: x 0..50 m, y 0..25 m, floor at z = -5 m (provisional depth).
+    Walls: 1 m thick, from below the floor up to z = +0.5 m.
+    Water: a see-through visual at z = 0 (no collision, no buoyancy).
+  Visual-only extras (no collisions): light deck around the pool at the
+  wall-top height, lawn beyond it, lane lines on the floor, and Gazebo's
+  built-in daytime sky.
+
+  Same pool as rov_bringup/maps/pool_map.yaml (axes aligned), which is
+  centred instead:  world (x, y) = map (x + 25, y + 12.5).
+-->
+<sdf version="1.9">
+  <world name="pool">
+    <!-- No gravity: the ROV is treated as neutrally buoyant (no buoyancy or
+         hydrodynamics model yet), so it keeps its depth. -->
+    <gravity>0 0 0</gravity>
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <!-- Lets "ros_gz_sim create" spawn the ROV into this world. -->
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+
+    <!-- Bright outdoor look: Gazebo's built-in sky (blue with soft clouds),
+         daylight ambient, no reference grid. -->
+    <scene>
+      <ambient>0.6 0.62 0.65 1</ambient>
+      <background>0.62 0.77 0.92 1</background>
+      <sky/>
+      <grid>false</grid>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- GUI layout. The plugins marked "floating" with size 5 are hidden helpers
+         (same as the default Gazebo layout). -->
+    <gui fullscreen="0">
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui>
+          <title>3D View</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.6 0.62 0.65</ambient_light>
+        <background_color>0.62 0.77 0.92</background_color>
+        <!-- Behind the start corner (world (1, 1)), looking diagonally across
+             the whole pool with some sky above the far side. -->
+        <camera_pose>-9 -9 12 0 0.42 0.56</camera_pose>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="InteractiveViewControl" name="Interactive view control">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="CameraTracking" name="Camera Tracking">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="MarkerManager" name="Marker manager">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="SelectEntities" name="Select Entities">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="VisualizationCapabilities" name="Visualization Capabilities">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="WorldControl" name="World control">
+        <gz-gui>
+          <title>World control</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="height">72</property>
+          <property type="double" key="width">121</property>
+          <property type="double" key="z">1</property>
+          <property type="string" key="state">floating</property>
+          <anchors target="3D View">
+            <line own="left" target="left"/>
+            <line own="bottom" target="bottom"/>
+          </anchors>
+        </gz-gui>
+        <play_pause>true</play_pause>
+        <step>true</step>
+        <start_paused>false</start_paused>
+      </plugin>
+      <!-- No docked side panels, so the 3D view uses the whole window.
+           Entity tree / Component inspector can be added from the GUI menu (top right). -->
+    </gui>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>25 12.5 30 0 0 0</pose>
+      <diffuse>1.0 0.97 0.9 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+      <direction>-0.45 0.35 -0.82</direction>
+    </light>
+
+    <!-- Floor, walls: one static model, simple boxes with collisions. -->
+    <model name="pool">
+      <static>true</static>
+      <link name="structure">
+        <!-- Floor: top surface at z = -5. -->
+        <collision name="floor_collision">
+          <pose>25 12.5 -5.25 0 0 0</pose>
+          <geometry><box><size>52 27 0.5</size></box></geometry>
+        </collision>
+        <visual name="floor_visual">
+          <pose>25 12.5 -5.25 0 0 0</pose>
+          <geometry><box><size>52 27 0.5</size></box></geometry>
+          <material>
+            <ambient>0.78 0.9 0.95 1</ambient>
+            <diffuse>0.78 0.9 0.95 1</diffuse>
+          </material>
+        </visual>
+
+        <!-- Walls: 6 m tall (z -5.5 .. +0.5), 1 m thick, outside the interior.
+             South/north walls are 52 m long and cover the corners;
+             west/east walls are 25 m long and fit between them. -->
+        <collision name="south_wall_collision">
+          <pose>25 -0.5 -2.5 0 0 0</pose>
+          <geometry><box><size>52 1 6</size></box></geometry>
+        </collision>
+        <visual name="south_wall_visual">
+          <pose>25 -0.5 -2.5 0 0 0</pose>
+          <geometry><box><size>52 1 6</size></box></geometry>
+          <material><ambient>0.9 0.95 0.97 1</ambient><diffuse>0.9 0.95 0.97 1</diffuse></material>
+        </visual>
+        <collision name="north_wall_collision">
+          <pose>25 25.5 -2.5 0 0 0</pose>
+          <geometry><box><size>52 1 6</size></box></geometry>
+        </collision>
+        <visual name="north_wall_visual">
+          <pose>25 25.5 -2.5 0 0 0</pose>
+          <geometry><box><size>52 1 6</size></box></geometry>
+          <material><ambient>0.9 0.95 0.97 1</ambient><diffuse>0.9 0.95 0.97 1</diffuse></material>
+        </visual>
+        <collision name="west_wall_collision">
+          <pose>-0.5 12.5 -2.5 0 0 0</pose>
+          <geometry><box><size>1 25 6</size></box></geometry>
+        </collision>
+        <visual name="west_wall_visual">
+          <pose>-0.5 12.5 -2.5 0 0 0</pose>
+          <geometry><box><size>1 25 6</size></box></geometry>
+          <material><ambient>0.9 0.95 0.97 1</ambient><diffuse>0.9 0.95 0.97 1</diffuse></material>
+        </visual>
+        <collision name="east_wall_collision">
+          <pose>50.5 12.5 -2.5 0 0 0</pose>
+          <geometry><box><size>1 25 6</size></box></geometry>
+        </collision>
+        <visual name="east_wall_visual">
+          <pose>50.5 12.5 -2.5 0 0 0</pose>
+          <geometry><box><size>1 25 6</size></box></geometry>
+          <material><ambient>0.9 0.95 0.97 1</ambient><diffuse>0.9 0.95 0.97 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Surroundings: visual only (no collisions), so physics and
+         navigation are unchanged. -->
+    <model name="pool_surroundings">
+      <static>true</static>
+      <link name="decor">
+        <!-- Deck around the pool, flush with the wall tops (z = 0.5). -->
+        <visual name="deck_south">
+          <pose>25 -4 0.25 0 0 0</pose>
+          <geometry><box><size>64 6 0.5</size></box></geometry>
+          <material><ambient>0.93 0.9 0.84 1</ambient><diffuse>0.93 0.9 0.84 1</diffuse></material>
+        </visual>
+        <visual name="deck_north">
+          <pose>25 29 0.25 0 0 0</pose>
+          <geometry><box><size>64 6 0.5</size></box></geometry>
+          <material><ambient>0.93 0.9 0.84 1</ambient><diffuse>0.93 0.9 0.84 1</diffuse></material>
+        </visual>
+        <visual name="deck_west">
+          <pose>-4 12.5 0.25 0 0 0</pose>
+          <geometry><box><size>6 27 0.5</size></box></geometry>
+          <material><ambient>0.93 0.9 0.84 1</ambient><diffuse>0.93 0.9 0.84 1</diffuse></material>
+        </visual>
+        <visual name="deck_east">
+          <pose>54 12.5 0.25 0 0 0</pose>
+          <geometry><box><size>6 27 0.5</size></box></geometry>
+          <material><ambient>0.93 0.9 0.84 1</ambient><diffuse>0.93 0.9 0.84 1</diffuse></material>
+        </visual>
+        <!-- Lawn beyond the deck (600 m wide ring), out to the horizon. -->
+        <visual name="lawn_south">
+          <pose>25 -307 0.2 0 0 0</pose>
+          <geometry><box><size>1264 600 0.5</size></box></geometry>
+          <material><ambient>0.42 0.62 0.33 1</ambient><diffuse>0.42 0.62 0.33 1</diffuse></material>
+        </visual>
+        <visual name="lawn_north">
+          <pose>25 332 0.2 0 0 0</pose>
+          <geometry><box><size>1264 600 0.5</size></box></geometry>
+          <material><ambient>0.42 0.62 0.33 1</ambient><diffuse>0.42 0.62 0.33 1</diffuse></material>
+        </visual>
+        <visual name="lawn_west">
+          <pose>-307 12.5 0.2 0 0 0</pose>
+          <geometry><box><size>600 39 0.5</size></box></geometry>
+          <material><ambient>0.42 0.62 0.33 1</ambient><diffuse>0.42 0.62 0.33 1</diffuse></material>
+        </visual>
+        <visual name="lawn_east">
+          <pose>357 12.5 0.2 0 0 0</pose>
+          <geometry><box><size>600 39 0.5</size></box></geometry>
+          <material><ambient>0.42 0.62 0.33 1</ambient><diffuse>0.42 0.62 0.33 1</diffuse></material>
+        </visual>
+        <!-- Lane lines on the pool floor, every 2.5 m across the pool. -->
+        <visual name="lane_line_1">
+          <pose>25 2.5 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_2">
+          <pose>25 5.0 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_3">
+          <pose>25 7.5 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_4">
+          <pose>25 10.0 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_5">
+          <pose>25 12.5 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_6">
+          <pose>25 15.0 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_7">
+          <pose>25 17.5 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_8">
+          <pose>25 20.0 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+        <visual name="lane_line_9">
+          <pose>25 22.5 -4.99 0 0 0</pose>
+          <geometry><box><size>46 0.25 0.01</size></box></geometry>
+          <material><ambient>0.1 0.25 0.55 1</ambient><diffuse>0.1 0.25 0.55 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Water surface: visual only (no collision, no physics). -->
+    <model name="water_surface">
+      <static>true</static>
+      <link name="surface">
+        <visual name="water_visual">
+          <pose>25 12.5 0 0 0 0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>50 25</size></plane></geometry>
+          <transparency>0.45</transparency>
+          <cast_shadows>false</cast_shadows>
+          <material>
+            <ambient>0.2 0.6 0.95 1</ambient>
+            <diffuse>0.2 0.6 0.95 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

@@ -1,0 +1,59 @@
+# V4 ROV thruster geometry, imported from the CAD export
+# DDRopt_ws/ROV_simple_model_V4/thruster_layout.csv (SolidWorks V4 assembly).
+#
+# Frame: base_link (= CAD origin, hull envelope centre).
+#   x forward, y left (port), z up. Positions in metres.
+# direction: unit vector of the force on the vehicle for a positive thrust
+#   command. Taken from the CAD thruster axis; the real sign also depends on
+#   propeller handedness and ESC wiring, so confirm it on the hardware.
+# IDs: thruster_0N comes from CAD instance Thruster_T500_V4-N, so an ID
+#   always means the same physical thruster.
+#
+# Horizontal thrusters (01-04) are vectored at 45 degrees in the x-y plane;
+# vertical thrusters (05-08) push along +z.
+# Dynamics parameters (thrust curves, limits, delays) are not set yet.
+
+frame_id: base_link
+thruster_model: T500
+
+thrusters:
+  thruster_01:
+    cad_name: Thruster_T500_V4-1
+    type: horizontal
+    position: [-0.32, -0.415, 0.045]        # aft, starboard
+    direction: [0.7071067811865476, -0.7071067811865476, 0.0]
+  thruster_02:
+    cad_name: Thruster_T500_V4-2
+    type: horizontal
+    position: [-0.32, 0.415, 0.045]         # aft, port
+    direction: [0.7071067811865476, 0.7071067811865476, 0.0]
+  thruster_03:
+    cad_name: Thruster_T500_V4-3
+    type: horizontal
+    position: [0.25, -0.345, 0.045]         # fore, starboard
+    direction: [0.7071067811865476, 0.7071067811865476, 0.0]
+  thruster_04:
+    cad_name: Thruster_T500_V4-4
+    type: horizontal
+    position: [0.25, 0.345, 0.045]          # fore, port
+    direction: [0.7071067811865476, -0.7071067811865476, 0.0]
+  thruster_05:
+    cad_name: Thruster_T500_V4-5
+    type: vertical
+    position: [-0.38, -0.26, 0.045]         # aft, starboard
+    direction: [0.0, 0.0, 1.0]
+  thruster_06:
+    cad_name: Thruster_T500_V4-6
+    type: vertical
+    position: [-0.38, 0.26, 0.045]          # aft, port
+    direction: [0.0, 0.0, 1.0]
+  thruster_07:
+    cad_name: Thruster_T500_V4-7
+    type: vertical
+    position: [0.30, -0.18, 0.045]          # fore, starboard
+    direction: [0.0, 0.0, 1.0]
+  thruster_08:
+    cad_name: Thruster_T500_V4-8
+    type: vertical
+    position: [0.30, 0.18, 0.045]           # fore, port
+    direction: [0.0, 0.0, 1.0]
