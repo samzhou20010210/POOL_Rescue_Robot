@@ -9,6 +9,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(nav2_msgs REQUIRED)
 
 add_executable(mission_node src/mission_node.cpp)
 target_include_directories(mission_node PUBLIC
@@ -19,6 +21,8 @@ ament_target_dependencies(
   mission_node
   "rclcpp"
   "geometry_msgs"
+  "rclcpp_action"
+  "nav2_msgs"
 )
 
 install(TARGETS mission_node

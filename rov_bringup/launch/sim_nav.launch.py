@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Start the simulation demo: sim_node, mission_node, and RViz2."""
+"""Start the simulation demo: sim_node, controller_node, mission_node, and RViz2."""
 
 import os
 
@@ -33,6 +33,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    controller_node = Node(
+        package='rov_control',
+        executable='controller_node',
+        name='controller_node',
+        output='screen',
+    )
+
     # output='screen' prints "Received goal: ..." in this launch terminal.
     mission_node = Node(
         package='rov_mission',
@@ -48,4 +55,4 @@ def generate_launch_description():
         arguments=['-d', rviz_config],
     )
 
-    return LaunchDescription([sim_node, mission_node, rviz])
+    return LaunchDescription([sim_node, controller_node, mission_node, rviz])
