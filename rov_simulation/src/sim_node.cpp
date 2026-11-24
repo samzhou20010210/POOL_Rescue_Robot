@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// sim_node: a very simple planar (2D) vehicle simulator.
+// sim_node: a very simple planar (2D) omnidirectional vehicle simulator.
 //
-// It listens to velocity commands on "cmd_vel":
+// It listens to velocity commands on "cmd_vel", given in base_link:
 //   - linear.x  is the forward speed in m/s
+//   - linear.y  is the sideways speed in m/s (positive = to the left)
 //   - angular.z is the yaw rate in rad/s
-// On every timer tick it moves the vehicle by (speed * elapsed time), then
+// On every timer tick it moves the vehicle by (velocity * elapsed time), then
 // publishes the new pose on "odom" and as the odom -> base_link TF.
 // If no command arrives for "cmd_timeout_sec" seconds, the vehicle stops.
 
@@ -75,6 +76,7 @@ private:
   void OnCmdVel(const geometry_msgs::msg::Twist & cmd)
   {
     forward_speed_ = cmd.linear.x;
+    lateral_speed_ = cmd.linear.y;
     yaw_rate_ = cmd.angular.z;
     last_cmd_time_ = now();
     has_received_cmd_ = true;
@@ -91,25 +93,29 @@ private:
     }
 
     // Only apply the command while it is fresh.
-    double speed = 0.0;
+    double forward = 0.0;
+    double lateral = 0.0;
     double turn_rate = 0.0;
     if (has_received_cmd_ && (current_time - last_cmd_time_).seconds() < cmd_timeout_sec_) {
-      speed = forward_speed_;
+      forward = forward_speed_;
+      lateral = lateral_speed_;
       turn_rate = yaw_rate_;
     }
 
-    // Use the heading halfway through the step; this is more accurate
-    // than the heading at the start when the vehicle is turning.
+    // Rotate the base_link velocity into the odom frame. Use the heading
+    // halfway through the step; this is more accurate than the heading at
+    // the start when the vehicle is turning.
     const double mid_yaw = yaw_ + 0.5 * turn_rate * dt;
-    x_ += speed * std::cos(mid_yaw) * dt;
-    y_ += speed * std::sin(mid_yaw) * dt;
+    x_ += (forward * std::cos(mid_yaw) - lateral * std::sin(mid_yaw)) * dt;
+    y_ += (forward * std::sin(mid_yaw) + lateral * std::cos(mid_yaw)) * dt;
     yaw_ = std::atan2(std::sin(yaw_ + turn_rate * dt), std::cos(yaw_ + turn_rate * dt));
 
-    PublishPose(current_time, speed, turn_rate);
+    PublishPose(current_time, forward, lateral, turn_rate);
   }
 
   // Publish odom and the TF using the same timestamp.
-  void PublishPose(const rclcpp::Time & stamp, double speed, double turn_rate)
+  void PublishPose(
+    const rclcpp::Time & stamp, double forward, double lateral, double turn_rate)
   {
     // A rotation of yaw_ around the z axis, written as a quaternion.
     geometry_msgs::msg::Quaternion orientation;
@@ -123,7 +129,8 @@ private:
     odom.pose.pose.position.x = x_;
     odom.pose.pose.position.y = y_;
     odom.pose.pose.orientation = orientation;
-    odom.twist.twist.linear.x = speed;  // Twist is given in base_link.
+    odom.twist.twist.linear.x = forward;  // Twist is given in base_link.
+    odom.twist.twist.linear.y = lateral;
     odom.twist.twist.angular.z = turn_rate;
     odom_publisher_->publish(odom);
 
@@ -144,6 +151,7 @@ private:
 
   // Latest command.
   double forward_speed_ = 0.0;
+  double lateral_speed_ = 0.0;
   double yaw_rate_ = 0.0;
   bool has_received_cmd_ = false;
   rclcpp::Time last_cmd_time_;

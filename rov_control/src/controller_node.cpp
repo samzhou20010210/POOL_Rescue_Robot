@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// controller_node: drives the planar simulator along a path.
+// controller_node: drives an omnidirectional planar vehicle (the ROV can move
+// forward, sideways, and turn independently) along a path.
 //
 // It offers a "follow_path" action (nav2_msgs/action/FollowPath). The path
-// can have one pose (drive straight to it) or many poses in order (for
+// can have one pose (move straight to it) or many poses in order (for
 // example a route from Nav2's planner that goes around obstacles).
 // On every timer tick the node:
 //   1. stops if the goal was canceled, odometry is stale, or the robot pose
 //      cannot be transformed into the path's frame,
-//   2. steers toward a "target point" on the path a short distance ahead,
-//      moving that point forward along the path in order,
+//   2. translates toward a "target point" on the path a short distance
+//      ahead, moving that point forward along the path in order. The
+//      position error is rotated into base_link and sent as linear.x
+//      (forward) and linear.y (left), while angular.z holds the heading the
+//      robot had when the goal started,
 //   3. once the target point is the last pose and the robot is close enough
-//      to it, turns in place to its yaw,
+//      to it, stops translating and turns in place to the goal's yaw,
 //   4. publishes zero velocity and reports success.
 //
 // No callback ever waits or sleeps: the action callbacks only store the
@@ -84,12 +88,11 @@ public:
     const double control_rate_hz = declare_parameter("control_rate_hz", 20.0);
     position_tolerance_ = declare_parameter("position_tolerance", 0.10);  // m
     yaw_tolerance_ = declare_parameter("yaw_tolerance", 0.05);  // rad
+    // Limit on the total planar speed, hypot(linear.x, linear.y).
     max_linear_speed_ = declare_parameter("max_linear_speed", 0.5);  // m/s
     max_angular_speed_ = declare_parameter("max_angular_speed", 1.0);  // rad/s
     linear_gain_ = declare_parameter("linear_gain", 1.0);
     angular_gain_ = declare_parameter("angular_gain", 2.0);
-    // If the heading error is larger than this, turn in place before driving.
-    turn_in_place_angle_ = declare_parameter("turn_in_place_angle", 0.5);  // rad
     // How far ahead on the path the robot aims. Small values follow the
     // path closely (keeping the turns around obstacles).
     lookahead_distance_ = declare_parameter("lookahead_distance", 0.3);  // m
@@ -210,6 +213,7 @@ private:
     }
     target_index_ = 0;
     phase_ = Phase::kFollowPath;
+    has_hold_yaw_ = false;  // Set from the robot's heading on the first control tick.
     active_goal_ = goal_handle;
     RCLCPP_INFO(
       get_logger(), "New goal: %zu poses in '%s', final x=%.2f, y=%.2f, yaw=%.2f rad",
@@ -244,6 +248,12 @@ private:
       return;
     }
 
+    // Heading to hold while translating: the robot's heading when the goal started.
+    if (!has_hold_yaw_) {
+      hold_yaw_ = robot.yaw;
+      has_hold_yaw_ = true;
+    }
+
     const Pose2D & final_pose = path_.back();
     geometry_msgs::msg::Twist cmd;  // All fields start at zero.
 
@@ -263,15 +273,26 @@ private:
       if (on_final_segment && DistanceTo(robot, final_pose) <= position_tolerance_) {
         phase_ = Phase::kAlignYaw;  // Close enough; now only fix the heading.
       } else {
+        // Position error to the target point, in the path frame ...
         const Pose2D & target = path_[target_index_];
-        const double heading_error =
-          NormalizeAngle(std::atan2(target.y - robot.y, target.x - robot.x) - robot.yaw);
-        cmd.angular.z = angular_gain_ * heading_error;
-        // Drive forward only when roughly facing the target. Slow down as
-        // the distance left along the route gets small.
-        if (std::abs(heading_error) < turn_in_place_angle_) {
-          cmd.linear.x = linear_gain_ * RemainingDistance(robot) * std::cos(heading_error);
+        const double error_x = target.x - robot.x;
+        const double error_y = target.y - robot.y;
+        // ... rotated by -yaw into base_link (x forward, y left).
+        const double cos_yaw = std::cos(robot.yaw);
+        const double sin_yaw = std::sin(robot.yaw);
+        const double error_forward = cos_yaw * error_x + sin_yaw * error_y;
+        const double error_left = -sin_yaw * error_x + cos_yaw * error_y;
+        const double error_length = std::hypot(error_forward, error_left);
+        if (error_length > 1e-6) {
+          // Move along the error direction. Slow down as the distance left
+          // along the route gets small.
+          const double speed = std::min(
+            linear_gain_ * RemainingDistance(robot), max_linear_speed_);
+          cmd.linear.x = speed * error_forward / error_length;
+          cmd.linear.y = speed * error_left / error_length;
         }
+        // Keep the starting heading while translating.
+        cmd.angular.z = angular_gain_ * NormalizeAngle(hold_yaw_ - robot.yaw);
       }
     }
 
@@ -281,16 +302,16 @@ private:
         FinishGoal(FollowPath::Result::NONE, "", GoalOutcome::kSucceeded);
         return;
       }
-      cmd.angular.z = angular_gain_ * yaw_error;
+      cmd.angular.z = angular_gain_ * yaw_error;  // Turn in place; no translation.
     }
 
-    cmd.linear.x = std::clamp(cmd.linear.x, -max_linear_speed_, max_linear_speed_);
+    // linear.x and linear.y were already limited together (by speed above).
     cmd.angular.z = std::clamp(cmd.angular.z, -max_angular_speed_, max_angular_speed_);
     cmd_vel_publisher_->publish(cmd);
 
     auto feedback = std::make_shared<FollowPath::Feedback>();
     feedback->distance_to_goal = static_cast<float>(RemainingDistance(robot));
-    feedback->speed = static_cast<float>(cmd.linear.x);
+    feedback->speed = static_cast<float>(std::hypot(cmd.linear.x, cmd.linear.y));
     active_goal_->publish_feedback(feedback);
   }
 
@@ -357,7 +378,6 @@ private:
   double max_angular_speed_;
   double linear_gain_;
   double angular_gain_;
-  double turn_in_place_angle_;
   double lookahead_distance_;
   double odom_timeout_sec_;
 
@@ -373,6 +393,9 @@ private:
   std::vector<double> length_to_end_;
   size_t target_index_ = 0;
   Phase phase_ = Phase::kFollowPath;
+  // Heading held while translating (the robot's heading when the goal started).
+  bool has_hold_yaw_ = false;
+  double hold_yaw_ = 0.0;
 
   // ROS interfaces, kept as members so they stay alive.
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
