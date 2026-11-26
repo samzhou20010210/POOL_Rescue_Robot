@@ -1,0 +1,29 @@
+# Step 10 safety test (design 5): Simultaneous rules: 6 s into the transit the heartbeat stops (stop, hold) AND the battery
+# drops to 15 % (abort, return). The vehicle holds; the mission switches to RETURN; when
+# the heartbeat returns 3 s later it returns to the shore.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_simultaneous
+description: Safety rule test safety_simultaneous.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - at_s: 6.0
+    actions:
+      - set_param: {node: fake_shore_node, name: heartbeat_enabled, value: false}
+      - set_param: {node: fake_vehicle_sensors_node, name: battery_percentage, value: 0.15}
+  - at_s: 9.0
+    actions:
+      - set_param: {node: fake_shore_node, name: heartbeat_enabled, value: true}
+
+expect:
+  safety_rules: [heartbeat_lost, low_battery]
+  phases: [TRANSIT, RETURN, STANDBY]
+  reports_present:
+    - "^BRAKING: safety monitor"
+    - "^MISSION .*-> RETURN \\(abort"
+    - "^MISSION .*RETURN -> STANDBY \\(shore reached"
+  reports_absent: []

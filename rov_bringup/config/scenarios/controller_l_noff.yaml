@@ -1,0 +1,39 @@
+# Step 5 acceptance: the trajectory controller follows a L path (8 m, 2 m-radius 90 deg turn, 8 m) at 1.5 m/s
+# (smooth ramps, peak acceleration 1.5 m/s^2), sent straight to the
+# controller by the scenario runner (the step 5 Path converter is retired).
+# Model feedforward OFF (comparison).
+
+base: baseline_submerged
+name: controller_l_noff
+description: Controller test, L path (8 m, 2 m-radius 90 deg turn, 8 m) at 1.5 m/s, feedforward off.
+
+launch:
+  arguments:
+    use_feedforward: "false"
+
+timeouts:
+  run_s: 60.0             # s
+
+events:
+  - at_s: 0.0
+    actions:
+      - controller_trajectory: {shape: l, speed: 1.5, x: -20.0, y: -7.5, yaw: 0.0}  # m/s, m, rad
+
+end:
+  report: "^(ACCEPTED|NOT ACCEPTED)"
+
+expect:
+  # Feedforward off: the tracking error must be visibly larger than the
+  # step 5 limit met with feedforward (the run may even be aborted by the
+  # controller's 1.0 m tracking-error limit).
+  status: ""
+  reason: ""
+  limits:
+    tracking_rms_m: {min: 0.15, max: 1000.0}  # m: larger than the feedforward limit (no upper bound)
+    tracking_max_m: {}                   # (the step 5 limits do not apply here)
+    terminal_error_m: {}
+    terminal_yaw_error_rad: {}
+    min_wall_distance_m: {}
+  reports_absent: []
+  required_topics:
+    /follow_trajectory/_action/feedback: 10

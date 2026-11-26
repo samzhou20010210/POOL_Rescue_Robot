@@ -1,0 +1,20 @@
+# Step 8B: a rejected replacement leaves the running goal intact. 5 s into
+# the approach an invalid trajectory (times not increasing) is sent to the
+# controller; it must be REJECTED (the runner fails the run otherwise) and
+# the approach must continue and be accepted without a controller failure.
+
+base: baseline_submerged
+name: invalid_replacement
+description: Invalid replacement trajectory mid-run is rejected; the approach continues.
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 0.0, y: 0.0}   # m, map frame
+  - at_s: 5.0
+    actions:
+      - invalid_trajectory: {}
+
+expect:
+  limits:
+    cruise_min_speed_mps: {min: 0.5}     # m/s: the running goal was not interrupted

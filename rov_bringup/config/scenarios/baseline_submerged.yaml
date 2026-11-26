@@ -1,0 +1,79 @@
+# Step 11 baseline: one fixed submerged target in the open pool, 5 Hz
+# replanning, no swimmers. Run with:
+#   ros2 run rov_bringup run_scenario.py baseline_submerged
+# Coordinates: map frame (pool-centred), m; angles rad; times s.
+
+name: baseline_submerged
+description: Submerged victim at the pool centre, 21 m from the start.
+backends: [dynamics, gazebo]
+
+launch:
+  package: rov_bringup
+  file: surface_approach.launch.py
+  # Every argument is pinned so the run does not depend on launch defaults.
+  # The runner sets backend for each run.
+  arguments:
+    gui: "false"
+    start_x: "5.0"        # m, pool world frame (= map (-20.0, -7.5))
+    start_y: "5.0"        # m, pool world frame
+    start_yaw: "0.0"      # rad
+    victim_state: submerged
+    dry_run: "false"
+    swimmers: "false"
+
+timeouts:
+  startup_s: 60.0         # launch until planner, controller and generator are ready, s
+  recorder_s: 15.0        # rosbag recorder until it has subscribed, s
+  settle_s: 1.0           # wait after readiness before the first event, s
+  run_s: 60.0             # first event until the end condition, s
+  tail_s: 1.0             # keep recording after the end condition, s
+  shutdown_s: 15.0        # per process group, SIGINT then SIGTERM then SIGKILL, s
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 0.0, y: 0.0}   # m, map frame
+
+end:
+  report: "^(ACCEPTED|NOT ACCEPTED|REJECTED)"
+
+expect:
+  status: accepted
+  reason: "clearance ok"
+  limits:
+    terminal_error_m: {max: 0.25}        # e_goal (design 6.5, simulation acceptance)
+    terminal_yaw_error_rad: {max: 0.15}  # e_psi
+    tracking_rms_m: {max: 0.15}          # step 5 tracking limits
+    tracking_max_m: {max: 0.3}
+    min_wall_distance_m: {min: 0.5}      # hull edge to wall (design 1 table)
+  reports_absent: ["REPLAN FAILED", "BRAKING", "CONTROLLER FAILED"]
+  required_topics:
+    /planner_report: 1
+    /follow_trajectory/_action/feedback: 10
+    /thrust_saturated: 10
+    /planned_path: 1                     # RViz outputs (step 8B)
+    /trajectory: 1
+    /corridor: 1
+    /terminal_pose: 1
+
+# Topics recorded into the bag (absolute names).
+record_topics:
+  - /victim_target                       # geometry_msgs/PointStamped: the target sent
+  - /planner_report                      # std_msgs/String: PLANNED / REPLANNED / ACCEPTED ...
+  - /scenario_report                     # std_msgs/String: runner-driven test outcomes
+  - /planner_status                      # rov_interfaces/PlannerStatus (typed)
+  - /odom                                # nav_msgs/Odometry: pose and velocity
+  - /tf                                  # odom -> base_link
+  - /tf_static                           # map -> odom
+  - /map                                 # latched map: wall distance
+  - /follow_trajectory/_action/feedback  # controller progress and tracking error (hidden topic)
+  - /follow_trajectory/_action/status    # goal status changes (hidden topic)
+  - /thrust_saturated                    # std_msgs/Bool from the thrust allocator
+  - /wrench_command                      # controller output, N / N m
+  - /thruster_command                    # allocated thruster forces, N
+  - /swimmer_tracks                      # noisy tracks seen by the planner
+  - /swimmer_truth                       # noise-free swimmer positions (metrics only)
+  - /planned_path                        # RViz: A* path of the last plan
+  - /trajectory                          # RViz: dispatched reference
+  - /corridor                            # RViz: FIRI polygons (MarkerArray)
+  - /terminal_pose                       # RViz: terminal pose

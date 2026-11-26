@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <!--
-  Pool world for Gazebo Harmonic (no water physics, no thrusters). Used by
-  pool_gazebo.launch.py (scene only) and sim_nav.launch.py backend:=gazebo.
+  Pool world for Gazebo Harmonic. Used by pool_gazebo.launch.py (scene only),
+  sim_nav.launch.py backend:=gazebo (velocity-controlled ROV), and
+  thrust_sim.launch.py backend:=gazebo (thrust-driven ROV; its thrust and
+  water damping come from plugins in the ROV model, not from this world).
 
   World frame: origin (0, 0, 0) is the bottom-left corner of the pool
   interior at the water surface. x along the 50 m side, y along the 25 m

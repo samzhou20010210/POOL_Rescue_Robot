@@ -1,0 +1,30 @@
+# Step 10 safety test (design 5): Swimmer rule 'within 3.0 m: speed limit 0.5 m/s'. A swimmer appears 2.5 m beside the robot
+# 6 s into the transit and stays 6 s (the planner's conservative check would never
+# let the robot approach a swimmer this close, so it must appear there).
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_swimmer_nearby
+description: Safety rule test safety_swimmer_nearby.
+launch:
+  arguments:
+    swimmers: "true"
+    swimmer_config: safety_swimmer_nearby_shore.yaml
+
+events:
+  - at_s: 0.0
+    actions:
+      - set_param: {node: fake_shore_node, name: active, value: true}
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+expect:
+  safety_rules: [swimmer_nearby]
+  reports_present:
+    - "SAFETY TRIGGER swimmer_nearby: .*speed limit 0.50 m/s"
+  reports_absent: []
+  limits:
+    min_swimmer_distance_m: {min: 1.0}   # r_swim

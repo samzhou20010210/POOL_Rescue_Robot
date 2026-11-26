@@ -1,0 +1,38 @@
+# Step 11 scenario matrix: every scenario on both simulation backends.
+#   ros2 run rov_bringup run_scenario.py --matrix matrix --domain-id 77
+# Order: planning (step 8B), controller (step 5), swimmers (step 9), mission
+# and safety (step 10), disturbances (step 11).
+
+backends: [dynamics, gazebo]
+scenarios:
+  - baseline_submerged
+  - transit_50m
+  - surface_victim
+  - moved_target
+  - forced_failure_keep
+  - forced_failure_brake
+  - invalid_replacement
+  - reject_victim_at_wall
+  - controller_line_ff
+  - controller_line_noff
+  - controller_l_ff
+  - controller_l_noff
+  - swimmers_1
+  - swimmers_2
+  - swimmers_3
+  - mission_submerged
+  - mission_surface
+  - victim_near_wall
+  - water_current
+  - safety_swimmer_nearby
+  - safety_swimmer_predicted
+  - safety_near_wall
+  - safety_odometry_timeout
+  - safety_heartbeat_lost
+  - safety_heartbeat_abort
+  - safety_thrust_saturation
+  - safety_low_battery
+  - safety_leak
+  - safety_mission_timeout
+  - safety_simultaneous
+  - stale_events

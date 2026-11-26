@@ -1,0 +1,34 @@
+# Parameters for dynamics_sim_node (rov_simulation).
+# Run with:
+#   ros2 run rov_simulation dynamics_sim_node --ros-args \
+#     --params-file $(ros2 pkg prefix rov_simulation)/share/rov_simulation/config/dynamics_sim.yaml
+#
+# The physics (mass, added mass, damping, thruster geometry and lag) is read
+# from the rov_description files below, not from this file.
+
+dynamics_sim_node:
+  ros__parameters:
+    # Empty = the installed rov_description/config/hydrodynamics_v4.yaml.
+    hydrodynamics_file: ""
+    # Empty = the installed rov_description/config/thrusters_v4.yaml.
+    thruster_config_file: ""
+
+    # RK4 step is at most 1 / integration_rate_hz (design: 200 Hz); > 0.
+    integration_rate_hz: 200.0
+    # odom and TF rate in Hz (design: 50 Hz); > 0.
+    publish_rate_hz: 50.0
+
+    # No thruster_command for this long (s) -> zero thrust command; the
+    # thrusters spin down and drag slows the vehicle. Provisional; > 0.
+    cmd_timeout_sec: 0.2
+
+    # Constant water current [x, y] in the odom frame, m/s
+    # (design 6.3: sim range 0-0.2 m/s). Default: still water.
+    water_current: [0.0, 0.0]
+
+    # Start pose [x (m), y (m), yaw (rad)] in the odom frame. The reset_vehicle
+    # service also returns here.
+    initial_pose: [0.0, 0.0, 0.0]
+
+    odom_frame_id: odom
+    base_frame_id: base_link

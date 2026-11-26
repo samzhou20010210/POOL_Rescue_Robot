@@ -1,0 +1,23 @@
+# Step 10 safety test (design 5): Rule 'low battery 20 %: abort, return'. The battery drops to 15 % 6 s into the transit.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_low_battery
+description: Safety rule test safety_low_battery.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - at_s: 6.0
+    actions:
+      - set_param: {node: fake_vehicle_sensors_node, name: battery_percentage, value: 0.15}
+
+expect:
+  safety_rules: [low_battery]
+  phases: [TRANSIT, RETURN, STANDBY]
+  reports_present:
+    - "SAFETY TRIGGER low_battery: .*abort, return"
+    - "^MISSION .*TRANSIT -> RETURN \\(abort"
+    - "^MISSION .*RETURN -> STANDBY \\(shore reached"
+  reports_absent: []

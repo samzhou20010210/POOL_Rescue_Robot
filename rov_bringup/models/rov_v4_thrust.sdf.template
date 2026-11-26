@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<!--
+  V4 ROV for the thrust-driven Gazebo backend (thrust_sim.launch.py
+  backend:=gazebo).
+
+  This is a template. thrust_sim.launch.py fills in every placeholder before
+  spawning, from:
+    rov_description/config/hydrodynamics_v4.yaml  mass, I_z, added mass, damping
+    rov_description/config/thrusters_v4.yaml      thruster layout and lag (read by the plugin)
+    rov_simulation/config/dynamics_sim.yaml        command timeout
+  so the physical values are the same ones dynamics_sim_node uses.
+
+  Setup (comparison with dynamics_sim_node):
+    - Gravity is on (thrust_sim.launch.py loads the pool world with
+      gravity) and PlanarThrusterSystem applies buoyancy: the ROV floats at
+      the static draft T = 0.20 m (base_link 0.05 m below the waterline),
+      level, with provisional hydrostatics from
+      rov_simulation/config/gazebo_hydrostatics.yaml.
+    - Thrust: PlanarThrusterSystem (rov_simulation) uses only the horizontal
+      thrusters 01-04, each with the first-order lag tau_m. It applies their
+      planar wrench [Fx, Fy, Mz] at the link origin, which is the centre of
+      gravity (r_g = 0). The thrusters' 0.045 m height and the vertical
+      thrusters 05-08 are ignored, so no roll or pitch moment is applied.
+    - Added mass: link <fluid_added_mass>, applied by the physics engine.
+      xx = -X_udot, yy = -Y_vdot, rr = -N_rdot. The other entries are not
+      identified and are 0.
+    - Damping: Gazebo's Hydrodynamics system with the surge, sway and yaw
+      linear and quadratic coefficients (Fossen signs, same as the YAML). Its
+      own added-mass terms are disabled because <fluid_added_mass> is used.
+    - ixx and iyy are placeholders (box 1.0 x 1.04 x 0.3 m); nothing excites
+      roll or pitch in this setup.
+  Pose feedback: OdometryPublisher, odom = Gazebo world frame, bridged to
+  ROS odom and TF. No other node publishes the pose in this mode.
+-->
+<sdf version="1.11">
+  <model name="rov_v4">
+    <link name="base_link">
+      <inertial>
+        <mass>${mass}</mass>
+        <inertia>
+          <ixx>4.88</ixx><iyy>4.54</iyy><izz>${inertia_z}</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+        <fluid_added_mass>
+          <xx>${added_mass_x}</xx>
+          <yy>${added_mass_y}</yy>
+          <rr>${added_mass_yaw}</rr>
+        </fluid_added_mass>
+      </inertial>
+      <visual name="hull">
+        <geometry>
+          <mesh>
+            <uri>model://rov_description/meshes/ROV_V4.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.6 0.6 0.6 1</ambient>
+          <diffuse>0.6 0.6 0.6 1</diffuse>
+        </material>
+      </visual>
+      <collision name="hull_box">
+        <geometry><box><size>1.0 1.04 0.3</size></box></geometry>
+      </collision>
+    </link>
+
+    <!-- Thrust from thrusters 01-04 (planar wrench at the centre of gravity). -->
+    <plugin filename="rov_planar_thruster_system"
+            name="rov_simulation::PlanarThrusterSystem">
+      <link_name>base_link</link_name>
+      <thruster_config>${thruster_config}</thruster_config>
+      <command_timeout>${command_timeout}</command_timeout>
+      <command_topic>/model/rov_v4/thruster_forces</command_topic>
+      <reset_topic>/model/rov_v4/reset_vehicle</reset_topic>
+      <hydrostatics>
+        <water_density>${water_density}</water_density>
+        <gravity>${gravity}</gravity>
+        <waterplane_area>${waterplane_area}</waterplane_area>
+        <bottom_below_origin>${bottom_below_origin}</bottom_below_origin>
+        <hull_height>${hull_height}</hull_height>
+        <heave_damping>${heave_damping}</heave_damping>
+        <roll_pitch_restoring>${roll_pitch_restoring}</roll_pitch_restoring>
+        <roll_pitch_damping>${roll_pitch_damping}</roll_pitch_damping>
+      </hydrostatics>
+    </plugin>
+
+    <!-- Linear and quadratic damping (Fossen signs: negative). -->
+    <plugin filename="gz-sim-hydrodynamics-system"
+            name="gz::sim::systems::Hydrodynamics">
+      <link_name>base_link</link_name>
+      <xU>${x_u}</xU>
+      <xUabsU>${x_uu}</xUabsU>
+      <yV>${y_v}</yV>
+      <yVabsV>${y_vv}</yVabsV>
+      <nR>${n_r}</nR>
+      <nRabsR>${n_rr}</nRabsR>
+      <disable_added_mass>true</disable_added_mass>
+      <!-- Constant water current (world frame, m/s): damping acts on the
+           velocity relative to the water, as in dynamics_sim_node. -->
+      <default_current>${current_x} ${current_y} 0</default_current>
+    </plugin>
+
+    <!-- The only pose feedback in this mode. -->
+    <plugin filename="gz-sim-odometry-publisher-system"
+            name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>odom</odom_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <odom_topic>/model/rov_v4/odometry</odom_topic>
+      <tf_topic>/model/rov_v4/odometry_tf</tf_topic>
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <dimensions>3</dimensions>
+    </plugin>
+  </model>
+</sdf>

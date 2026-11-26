@@ -1,0 +1,71 @@
+# Step 10 acceptance, submerged branch: STANDBY -> TRANSIT -> FINAL_APPROACH
+# -> DIVE_AND_GRASP (stub: holds bow-on) -> RETURN -> STANDBY, driven by
+# typed events: the shore alarm, the planner's verified arrival, a simulated
+# "victim lifted" event 3 s into DIVE_AND_GRASP, and the verified arrival at
+# the shore pose. Safety monitor running (no rule may trigger).
+
+base: baseline_submerged
+name: mission_submerged
+description: Full submerged mission through RETURN with the safety monitor running.
+mission: true             # the runner waits for the mission manager
+
+launch:
+  arguments:
+    mission: "true"
+
+timeouts:
+  run_s: 120.0            # s: approach, 3 s rescue, return
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}   # m, map frame
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+end:
+  phase: STANDBY
+  after_phase: RETURN
+
+expect:
+  phases: [TRANSIT, FINAL_APPROACH, DIVE_AND_GRASP, RETURN, STANDBY]
+  reports_present:
+    - "^MISSION .*TRANSIT -> FINAL_APPROACH"
+    - "^MISSION .*FINAL_APPROACH -> DIVE_AND_GRASP \\(verified arrival"
+    - "^MISSION .*RETURN -> STANDBY \\(shore reached"
+  reports_absent: ["SAFETY TRIGGER", "REPLAN FAILED", "CONTROLLER FAILED"]
+  required_topics:
+    /mission_state: 5
+    /safety_status: 50
+
+record_topics:
+  - /shore_alarm
+  - /victim
+  - /goal_pose
+  - /planner_report
+  - /planner_status
+  - /mission_state
+  - /mission_report
+  - /mission_event
+  - /safety_status
+  - /safety_report
+  - /shore_heartbeat
+  - /battery_state
+  - /leak_alarm
+  - /odom
+  - /tf
+  - /tf_static
+  - /map
+  - /follow_trajectory/_action/feedback
+  - /follow_trajectory/_action/status
+  - /thrust_saturated
+  - /wrench_command
+  - /thruster_command
+  - /swimmer_tracks
+  - /swimmer_truth
+  - /planned_path
+  - /trajectory
+  - /corridor
+  - /terminal_pose

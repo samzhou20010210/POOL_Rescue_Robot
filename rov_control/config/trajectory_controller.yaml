@@ -1,0 +1,32 @@
+# Parameters for trajectory_controller_node (rov_control).
+# Values follow SURFACE_APPROACH_DESIGN.md sections 4, 6.5 and 6.6.
+# "provisional" = placeholder until tuning or tests replace it.
+
+trajectory_controller_node:
+  ros__parameters:
+    # Hull model for the feedforward. Empty = the installed
+    # rov_description/config/hydrodynamics_v4.yaml (same file as the simulators).
+    hydrodynamics_file: ""
+
+    # PD gains (design 6.6). With M_eff = 65 kg: omega_n about 1.75 rad/s, zeta about 0.7.
+    position_gain: 200.0      # K_p x, y, N/m; > 0
+    velocity_gain: 150.0      # K_d x, y, N s/m; >= 0
+    yaw_gain: 50.0            # K_p yaw, N m/rad; > 0
+    yaw_rate_gain: 30.0       # K_d yaw, N m s/rad; >= 0
+    use_feedforward: true     # model feedforward tau_ff (design 6.6: use_ff)
+
+    control_rate_hz: 50.0     # design 6.6: f_ctrl; > 0
+    feedback_rate_hz: 10.0    # action feedback; > 0
+
+    # Safety and completion.
+    odom_timeout_sec: 0.2           # design 6.7: t_odom; no odometry -> abort, zero wrench
+    max_position_error_m: 1.0       # abort above this tracking error; provisional
+    goal_position_tolerance_m: 0.15 # design 6.5: e_goal
+    goal_yaw_tolerance_rad: 0.1     # design 6.5: e_psi
+    stop_speed_mps: 0.05            # "stopped" below this speed; provisional
+    stop_yaw_rate_radps: 0.05       # and below this yaw rate; provisional
+    settle_timeout_sec: 10.0        # time allowed after the last point; provisional
+    stop_hold_sec: 0.5              # must stay at the goal and stopped this long; provisional
+    hold_after_success: true        # keep holding the final pose after SUCCEEDED (station keeping)
+
+    base_frame_id: base_link

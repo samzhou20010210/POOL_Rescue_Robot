@@ -1,0 +1,27 @@
+# Step 10 safety test (design 5): Stale events are ignored: an alarm stamped 10 s ago does not start the mission, and a
+# battery reading of 10 % stamped 10 s ago does not abort it; a fresh alarm does start it.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: stale_events
+description: Safety rule test stale_events.
+
+events:
+  - at_s: 0.0
+    actions:
+      - set_param: {node: fake_vehicle_sensors_node, name: stamp_offset_s, value: -10.0}
+      - set_param: {node: fake_vehicle_sensors_node, name: battery_percentage, value: 0.1}
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged, age_s: 10.0}
+  - at_s: 3.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+expect:
+  safety_rules_absent: [low_battery]
+  reports_present:
+    - "ignored stale shore alarm"
+  reports_absent: ["SAFETY TRIGGER low_battery"]

@@ -1,0 +1,48 @@
+# V4 ROV hull and hydrodynamic parameters, SURFACE_APPROACH_DESIGN.md 6.1.
+#
+# Frame: base_link (x forward, y left, z up). SI units.
+# Signs follow Fossen: added mass and damping coefficients are negative
+#   (the force they produce opposes the motion).
+# Most values are estimates. They will be replaced by the identification
+#   experiments in design section 7.
+# null = TBD (code that needs the value must refuse to run).
+# Key names follow the design's symbols in snake_case
+#   (X_udot -> x_udot, X_u|u| -> x_uu).
+
+# Rigid body
+mass: 50.0                    # m, kg; estimate -> weighing; > 0
+inertia_z: 8.67               # I_z, kg m^2; CAD; > 0
+center_of_gravity: [0.0, 0.0, 0.0]  # r_g, m; CAD -> suspension test.
+                              # The planar sim needs x = y = 0.
+center_of_buoyancy: null      # r_b, m; TBD (CAD -> still-water test)
+displaced_volume: null        # nabla, m^3; TBD (CAD -> still-water test)
+
+# Hull geometry used for drag estimates
+static_draft: 0.20            # T, m; estimate -> measured
+frontal_area_surge: 0.21      # A_x, m^2; 1.04 m x T
+frontal_area_sway: 0.20       # A_y, m^2; 1.00 m x T
+
+# Added mass, <= 0. Effective mass = m - x_udot must stay > 0.
+added_mass:
+  x_udot: -15.0               # X_udot, kg; estimate -> identification
+  y_vdot: -15.0               # Y_vdot, kg; estimate -> identification
+  n_rdot: -1.5                # N_rdot, kg m^2; estimate -> identification
+
+# Linear damping, <= 0.
+linear_damping:
+  x_u: -10.0                  # X_u, N s/m; estimate -> identification
+  y_v: -10.0                  # Y_v, N s/m; estimate -> identification
+  n_r: -5.0                   # N_r, N m s; estimate -> identification
+
+# Quadratic damping, <= 0.
+quadratic_damping:
+  x_uu: -100.0                # X_u|u|, N s^2/m^2; 1/2 rho C_d A_x, C_d = 1.0 -> identification
+  y_vv: -100.0                # Y_v|v|, N s^2/m^2; 1/2 rho C_d A_y, C_d = 1.0 -> identification
+  n_rr: -30.0                 # N_r|r|, N m s^2; estimate -> identification
+
+# Speed above which wave-making drag rises sharply (Fr = 0.4, L = 1.0 m).
+# Not used by the planar simulator yet (no wave-drag model is specified).
+wave_drag_knee_speed: 1.25    # v_wave, m/s; fitted from runs
+
+# The former gripper_center (p_grip) is gone: the terminal pose now uses the
+# bow offset and the stowed-arm protrusion (rov_planning/config/terminal_pose.yaml).

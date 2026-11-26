@@ -1,0 +1,35 @@
+# Step 10 acceptance, surface branch: STANDBY -> TRANSIT -> FINAL_APPROACH
+# -> SURFACE_HOLD -> RETURN -> STANDBY; the victim is "secured" 3 s into
+# SURFACE_HOLD (simulated event). 0.3 m/s cap within 2 m (design 3 item 5).
+
+base: mission_submerged
+name: mission_surface
+description: Full surface mission through RETURN with the safety monitor running.
+
+launch:
+  arguments:
+    victim_state: surface
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: surface}     # m, map frame
+  - on_phase: SURFACE_HOLD
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim secured (simulated)"}
+
+expect:
+  phases: [TRANSIT, FINAL_APPROACH, SURFACE_HOLD, RETURN, STANDBY]
+  reports_present:
+    - "^MISSION .*TRANSIT -> FINAL_APPROACH"
+    - "^MISSION .*FINAL_APPROACH -> SURFACE_HOLD \\(verified arrival"
+    - "^MISSION .*RETURN -> STANDBY \\(shore reached"
+  limits:
+    final_zone_max_speed_mps: {max: 0.3}  # m/s, v_final within d_final (design 6.5)
+    replan_failures: {max: 1}            # recovered failures allowed (see below)
+  # Near the 0.3 m/s final zone a replan can end marginally above the speed
+  # envelope (about 0.007 m/s); the failure handling keeps the still-valid
+  # trajectory and retries. Allowed: at most one such recovered failure, and
+  # no braking (finding, see the step 8B status).
+  reports_absent: ["BRAKING", "CONTROLLER FAILED"]

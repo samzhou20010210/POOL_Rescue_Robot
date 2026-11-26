@@ -1,0 +1,5 @@
+<library path="swimmer_layer">
+  <class type="rov_planning::SwimmerLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>Marks the predicted positions of non-target swimmers (rov_interfaces/SwimmerTrackArray) as lethal, with clearance; clears them when tracks move or expire.</description>
+  </class>
+</library>

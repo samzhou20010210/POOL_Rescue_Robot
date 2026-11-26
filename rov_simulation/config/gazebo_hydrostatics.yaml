@@ -1,0 +1,19 @@
+# Hydrostatics of the thrust-driven Gazebo backend (step 4: gravity and
+# buoyancy). PROVISIONAL SIMULATION VALUES: the design's displaced volume
+# (nabla) and centre of buoyancy (r_b) are TBD (still-water test, design 7
+# experiment 2) and stay null in rov_description/config/hydrodynamics_v4.yaml.
+# The hull is modelled as a box 0.3 m high centred on base_link; buoyancy
+# acts at base_link (r_b = r_g); the waterline is world z = 0.
+
+water_density: 997.0          # rho (design 6.3), kg/m^3
+gravity: 9.81                 # g (design 6.3), m/s^2
+# A_wp = m / (rho T) = 50 / (997 * 0.20): floats at the static draft
+# T = 0.20 m (design 6.1) with m = 50 kg. m^2; provisional.
+waterplane_area: 0.2508
+bottom_below_origin: 0.15     # m, hull bottom below base_link; provisional
+hull_height: 0.3              # m; provisional (the model's collision box)
+# Heave damping Z_w: about half of critical, 2 sqrt(rho g A_wp m) = 700 N s/m.
+heave_damping: -350.0         # N s/m (<= 0); provisional
+# Roll / pitch: restoring m g GM with GM = 0.05 m, and damping. Provisional.
+roll_pitch_restoring: 24.5    # N m/rad (>= 0)
+roll_pitch_damping: -10.0     # N m s/rad (<= 0)

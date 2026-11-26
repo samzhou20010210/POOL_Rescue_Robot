@@ -1,0 +1,15 @@
+# Non-target swimmer prediction (rov_planning, implementation step 9).
+# Read with rov_planning::LoadSwimmerPredictionSettings() by BOTH the
+# swimmer_layer costmap plugin and trajectory_generator_node, so the costmap
+# marks and the dispatch check use the same prediction. Every key is required.
+# Design: SURFACE_APPROACH_DESIGN.md section 3 item 2, tables 6.4, 6.5, 6.7.
+#
+# A measurement (p, v) stamped t_m predicts the swimmer at time t inside
+#   centre p + v (t - t_m), radius clearance_m + max_swimmer_speed_mps (t - t_m).
+
+prediction_horizon_s: 2.0     # t_pred (design 6.5), s; >= 0
+max_swimmer_speed_mps: 2.0    # v_swim (design 6.5): disc radius growth, m/s; >= 0
+clearance_m: 1.0              # r_swim (design 6.7): hull edge to swimmer, m; >= 0
+prediction_step_s: 0.25       # s between discs marked in the costmap; > 0; provisional
+max_track_age_s: 1.0          # s: a measurement older than this is stale (10 Hz tracks); > 0; provisional
+max_future_stamp_s: 0.1       # s: reject stamps further ahead of the local clock; >= 0; provisional

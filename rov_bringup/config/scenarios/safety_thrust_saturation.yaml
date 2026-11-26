@@ -1,0 +1,30 @@
+# Step 10 safety test (design 5): Rule 'sustained thrust saturation 2.0 s: replan with 0.7 v_cruise'. 3 s into the transit
+# the allocator's force limits drop to 40 % (test hook) for 6 s.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_thrust_saturation
+description: Safety rule test safety_thrust_saturation.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - at_s: 3.0
+    actions:
+      - set_param: {node: thrust_allocator_node, name: test_force_limit_scale, value: 0.4}
+  - at_s: 9.0
+    actions:
+      - set_param: {node: thrust_allocator_node, name: test_force_limit_scale, value: 1.0}
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+expect:
+  safety_rules: [thrust_saturation]
+  reports_present:
+    - "SAFETY TRIGGER thrust_saturation: .*replan at 0.70 v_cruise"
+    - "^REPLANNED .*cap 1.05 m/s"
+  reports_absent: []
+  limits: {}              # tracking limits do not apply with the thrust starved to 40 %

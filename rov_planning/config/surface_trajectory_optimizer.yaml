@@ -1,0 +1,52 @@
+# Surface trajectory optimizer (rov_planning, implementation step 7).
+# Read with rov_planning::LoadOptimizerSettings(). Every key is required.
+# Values follow SURFACE_APPROACH_DESIGN.md sections 3 and 6.5.
+# "provisional" = placeholder until tuning or tests replace it.
+
+# Motion limits.
+cruise_speed: 1.5             # v_cruise, m/s (design 6.5); > 0
+braking_deceleration: 1.0     # a_b, m/s^2, braking curve v_max(d) = min(v_cruise, sqrt(2 a_b d)); > 0
+max_yaw_rate: 1.5             # omega_max, rad/s (design 6.5); > 0
+
+# Planning thrust limits per thruster, positive magnitudes in N. They must
+# not exceed the allocator's limits (rov_control/config/thrust_allocator.yaml:
+# 140 / 100 N); CheckPlanningLimits() enforces this.
+planning_forward_force: 110.0  # f_plan (design 6.2, ~70% of peak); > 0
+planning_reverse_force: 70.0   # provisional: f_rev is TBD (bench test); ~70% of the 100 N control limit
+
+# Cost (design 6.5).
+time_weight: 1024.0           # rho_T, cost per second of duration; > 0 (tune)
+samples_per_piece: 16         # K, penalty samples per polynomial piece; > 0
+thrust_penalty_weight: 1.0e4  # w_tau (tune)
+speed_penalty_weight: 1.0e5   # w_v (tuned; design 6.5 starts at 1e4). With 1e4 a warm-started L-turn
+                              # replan ended ~0.02 m/s over the braking curve in the last 2 cm in
+                              # 20/20 runs (too short to cost more than the time saved); 1e5: 0/20.
+yaw_rate_penalty_weight: 1.0e4    # provisional (tune)
+corridor_penalty_weight: 1.0e4    # provisional (tune)
+penalty_smoothing: 0.01       # smoothed-L1 width (GCOPTER default); > 0
+
+# Margins: the penalties aim slightly inside the limits so the checks hold.
+corridor_margin: 0.05         # m, provisional; > 0
+speed_margin_fraction: 0.03   # aim for (1 - f) of the speed and yaw-rate limits; 0 < f < 1, provisional
+
+# Solver and checks.
+relative_cost_tolerance: 1.0e-5   # L-BFGS stop on relative cost change; > 0
+max_iterations: 3000              # L-BFGS iteration cap; > 0. Provisional: the L-turn needs about 1100 from a cold start
+thrust_tolerance_fraction: 0.02   # allowed thrust violation, fraction of planning_forward_force (step 7: 2%)
+check_samples_per_piece: 64       # samples per piece for the thrust, speed and yaw-rate checks; > 0
+
+# Cooperative solve deadline for one Plan() call (setup, warm-start mapping,
+# L-BFGS), in ms; > 0. When it passes, L-BFGS stops and the result is a
+# timeout, which is never dispatched. Provisional: this is a safety stop, not
+# the step 7 target (< 50 ms), which is not met yet (cold L-turn ~1 s).
+solve_deadline_ms: 2000.0
+# Surface-victim final zone (design 3 item 5, 6.5): within final_zone_distance
+# of the goal the speed is capped at final_zone_speed; outside it the
+# braking curve that reaches that speed at the zone edge applies.
+final_zone_distance: 2.0      # d_final, m; > 0
+final_zone_speed: 0.3         # v_final, m/s; > 0
+final_zone_buffer: 0.25    # m, provisional; > 0: the speed penalty starts the zone this far
+                              # outside d_final (the validation uses d_final itself)
+# A speed cap below the start speed (safety limit or retry while moving) is
+# phased in along sqrt((v0 + headroom)^2 - 2 a_b s) from the start.
+cap_phase_in_headroom: 0.1   # m/s, provisional; > 0

@@ -1,0 +1,31 @@
+# Step 10 safety test (design 5): Rule 'odometry timeout 0.2 s: all thruster forces 0'. Odometry stops for 1.0 s 6 s into
+# the transit (simulator test hook), then resumes; the mission resumes with a fresh plan.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_odometry_timeout
+description: Safety rule test safety_odometry_timeout.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - at_s: 6.0
+    actions:
+      - set_param: {node: {dynamics: dynamics_sim_node, gazebo: gazebo_thruster_relay}, name: publish_odometry, value: false}
+  - at_s: 7.0
+    actions:
+      - set_param: {node: {dynamics: dynamics_sim_node, gazebo: gazebo_thruster_relay}, name: publish_odometry, value: true}
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+expect:
+  safety_rules: [odometry_timeout]
+  phases: [TRANSIT, SAFETY_STOP, TRANSIT, FINAL_APPROACH, DIVE_AND_GRASP, RETURN, STANDBY]
+  reports_present:
+    - "SAFETY TRIGGER odometry_timeout: .*all thruster forces 0"
+  reports_absent: []
+  limits:
+    zero_thrust_max_force_n: {max: 0.001}   # N: every thruster at 0

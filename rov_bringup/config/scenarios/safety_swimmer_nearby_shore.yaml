@@ -1,0 +1,20 @@
+# Fake shore swimmer for safety_swimmer_nearby (appears 6 s after activation, stationary 2.5 m left of the route 8 m from the start - beside the robot - for 6 s).
+# Inactive until the scenario activates it; times count from activation (s).
+
+fake_shore_node:
+  ros__parameters:
+    active: false
+    publish_rate_hz: 10.0      # Hz
+    frame_id: map
+    position_noise_m: 0.05     # m
+    velocity_noise_mps: 0.05   # m/s; provisional
+    random_seed: 42
+    swimmer_ids: [1]
+    swimmer_motions: ["straight"]
+    swimmer_start_x: [-13.387]   # m
+    swimmer_start_y: [-2.350]   # m
+    swimmer_velocity_x: [0.000]   # m/s
+    swimmer_velocity_y: [0.000]   # m/s
+    swimmer_travel_m: [0.0]     # m
+    swimmer_start_time_s: [6.0]   # s
+    swimmer_lifetime_s: [6.0]    # s

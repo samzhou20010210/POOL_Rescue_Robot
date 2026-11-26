@@ -1,0 +1,22 @@
+# Follow a time-parameterized planar trajectory (see Trajectory.msg).
+
+# Goal
+Trajectory trajectory
+---
+# Result
+uint8 SUCCEEDED=0
+uint8 INVALID_TRAJECTORY=1     # empty, times not increasing, wrong frame
+uint8 TRACKING_ERROR_EXCEEDED=2
+uint8 CANCELED=3
+uint8 PREEMPTED=4              # replaced by a newer trajectory (5 Hz replanning)
+bool success
+uint8 error_code
+string message                 # human-readable reason
+float64 final_position_error   # m, horizontal distance to the last point
+float64 final_yaw_error        # rad, wrapped to [-pi, pi]
+---
+# Feedback
+float64 progress               # 0..1, elapsed time / trajectory duration
+float64 time_remaining         # s
+float64 position_error         # m, horizontal distance robot -> reference now
+float64 yaw_error              # rad, reference - robot, wrapped to [-pi, pi]

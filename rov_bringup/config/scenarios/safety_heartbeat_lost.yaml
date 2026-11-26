@@ -1,0 +1,33 @@
+# Step 10 safety test (design 5): Rule 'heartbeat lost 1.0 s: decelerate along the trajectory, hold'. The shore heartbeat
+# stops for 3 s 6 s into the transit, then returns; the mission resumes.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_heartbeat_lost
+description: Safety rule test safety_heartbeat_lost.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - at_s: 6.0
+    actions:
+      - set_param: {node: fake_shore_node, name: heartbeat_enabled, value: false}
+  - at_s: 9.0
+    actions:
+      - set_param: {node: fake_shore_node, name: heartbeat_enabled, value: true}
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                          # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+expect:
+  safety_rules: [heartbeat_lost]
+  safety_rules_absent: [heartbeat_abort]
+  phases: [TRANSIT, SAFETY_STOP, TRANSIT, FINAL_APPROACH, DIVE_AND_GRASP, RETURN, STANDBY]
+  reports_present:
+    - "SAFETY TRIGGER heartbeat_lost: .*decelerate along the trajectory, hold"
+    - "^BRAKING: safety monitor"
+    - "^HOLDING"
+    - "^REPLANNED \\(resume after safety hold\\)"
+  reports_absent: []

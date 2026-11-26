@@ -1,0 +1,31 @@
+# Step 9 acceptance: Two swimmers crossing the route at different places and times.
+# The robot must reach the goal and keep at least r_swim = 1.0 m between its
+# hull (stowed outline) and every swimmer (noise-free positions,
+# /swimmer_truth). Swimmers: swimmers_2_shore.yaml.
+
+base: baseline_submerged
+name: swimmers_2
+description: Two swimmers crossing the route at different places and times.
+
+launch:
+  arguments:
+    swimmers: "true"
+    swimmer_config: swimmers_2_shore.yaml
+
+timeouts:
+  run_s: 120.0            # s: the robot may hold until the swimmers have passed
+
+events:
+  - at_s: 0.0
+    actions:
+      - set_param: {node: fake_shore_node, name: active, value: true}
+      - victim_target: {x: 0.0, y: 0.0}   # m, map frame
+
+expect:
+  limits:
+    min_swimmer_distance_m: {min: 1.0}    # r_swim (design 6.7), hull edge to swimmer
+  reports_present: ["^(SWIMMER CONFLICT|BLOCKED)"]
+  reports_absent: ["CONTROLLER FAILED"]
+  required_topics:
+    /swimmer_truth: 20
+    /swimmer_tracks: 20

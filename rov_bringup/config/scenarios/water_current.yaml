@@ -1,0 +1,12 @@
+# Step 11 disturbance scenario: a constant 0.2 m/s water current (design
+# 6.3: v_c up to 0.2 m/s) across the route (+y, world frame), not known to
+# the planner or the controller's feedforward. The submerged mission must
+# still complete within the acceptance limits.
+
+base: mission_submerged
+name: water_current
+description: Full submerged mission in a 0.2 m/s cross current.
+
+launch:
+  arguments:
+    water_current: "0.0,0.2"   # m/s, world frame (x, y)

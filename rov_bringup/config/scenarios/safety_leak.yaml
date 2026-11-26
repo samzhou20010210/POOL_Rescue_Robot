@@ -1,0 +1,24 @@
+# Step 10 safety test (design 5): Rule 'leak alarm: abort, surface, return'. The leak sensor gets wet 6 s into the transit.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_leak
+description: Safety rule test safety_leak.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+  - at_s: 6.0
+    actions:
+      - set_param: {node: fake_vehicle_sensors_node, name: leak, value: true}
+
+expect:
+  safety_rules: [leak]
+  phases: [TRANSIT, RETURN, STANDBY]
+  reports_present:
+    - "SAFETY TRIGGER leak: .*abort, surface, return"
+    - "^MISSION .*TRANSIT -> RETURN \\(abort .*surface, then return"
+    - "surface first"
+    - "^MISSION .*RETURN -> STANDBY \\(shore reached"
+  reports_absent: []

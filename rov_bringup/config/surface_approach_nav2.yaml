@@ -1,0 +1,57 @@
+# Nav2 parameters for surface_approach.launch.py (implementation step 8B).
+# Only global planning is used: map_server + planner_server with A*.
+# The demo launch (sim_nav.launch.py) keeps its own planning_preview.yaml.
+
+map_server:
+  ros__parameters:
+    # yaml_filename is set by the launch file (default maps/pool_map.yaml).
+    topic_name: map
+    frame_id: map
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.0        # m; plan to the terminal pose exactly
+      use_astar: true       # design 3 item 2
+      allow_unknown: false
+
+# planner_server creates this costmap as a child node.
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 5.0          # Hz; swimmer marks follow the 10 Hz tracks (step 9)
+      publish_frequency: 1.0         # Hz
+      resolution: 0.05               # m (design 6.5)
+      # Cells closer than this to a wall are not plannable for base_link:
+      # stowed outline corner radius ~0.79 m + 0.5 m wall clearance. m.
+      robot_radius: 1.3
+      track_unknown_space: true
+      always_send_full_costmap: true
+      # The swimmer layer sits between the static and the inflation layer, so
+      # its marks are inflated by the robot radius like walls.
+      plugins: ["static_layer", "swimmer_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      # Predicted non-target swimmers (rov_planning, step 9).
+      swimmer_layer:
+        plugin: "rov_planning::SwimmerLayer"
+        enabled: true
+        topic: /swimmer_tracks          # rov_interfaces/SwimmerTrackArray
+        # Prediction settings (t_pred, v_swim, r_swim, track age), shared with
+        # trajectory_generator_node. Empty: rov_planning/config/swimmer_prediction.yaml.
+        prediction_file: ""
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 1.8        # m; prefer paths further from the walls
+        cost_scaling_factor: 3.0
+
+lifecycle_manager_surface_planning:
+  ros__parameters:
+    autostart: true
+    node_names: ["map_server", "planner_server"]

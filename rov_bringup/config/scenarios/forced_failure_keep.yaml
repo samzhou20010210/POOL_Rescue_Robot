@@ -1,0 +1,22 @@
+# Step 8B failure handling (design 3 item 7): two forced optimizer failures
+# 5 s into the approach. The active trajectory is kept (still valid), the
+# retry runs at 0.7 v_cruise, and the vehicle arrives without braking.
+
+base: baseline_submerged
+name: forced_failure_keep
+description: Two forced optimizer failures mid-run; keep the active trajectory.
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 0.0, y: 0.0}   # m, map frame
+  - at_s: 5.0
+    actions:
+      - set_param: {node: trajectory_generator_node, name: force_optimizer_failures, value: 2}
+
+expect:
+  reports_present:
+    - "^REPLAN FAILED \\(optimizer failure forced.*failure 1 of 3.*keeping the active trajectory"
+    - "^REPLAN FAILED \\(optimizer failure forced.*failure 2 of 3"
+    - "cap 1.05 m/s"                     # the retry at 0.7 v_cruise
+  reports_absent: ["BRAKING", "CONTROLLER FAILED"]

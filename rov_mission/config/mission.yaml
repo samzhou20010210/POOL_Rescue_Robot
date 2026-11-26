@@ -1,0 +1,37 @@
+# Mission manager and safety monitor (rov_mission, implementation step 10).
+# Thresholds: design 5 and table 6.7 (unchanged).
+
+mission_manager_node:
+  ros__parameters:
+    map_frame: map
+    base_frame: base_link
+    # Shore pose for RETURN, map frame: [x m, y m, yaw rad]. Simulation
+    # value (the start pose, facing the near wall); provisional.
+    shore_pose: [-20.0, -7.5, 3.14159]
+    event_max_age_s: 2.0       # typed events older than this are ignored (stale), s; provisional
+    odometry_fresh_s: 0.2      # resume needs odometry at most this old, s (= t_odom)
+    terminal_pose_file: ""     # d_hold comes from it (empty: rov_planning default)
+
+safety_monitor_node:
+  ros__parameters:
+    rate_hz: 10.0                  # evaluation and safety_status rate, Hz
+    map_frame: map
+    base_frame: base_link
+    swimmer_slow_radius_m: 3.0     # r_slow (design 6.7), m
+    swimmer_slow_speed_mps: 0.5    # v_slow, m/s
+    swimmer_clearance_m: 1.0       # r_swim, m
+    prediction_horizon_s: 2.0      # t_pred (design 6.5), s
+    prediction_step_s: 0.1         # s; provisional
+    wall_distance_m: 0.5           # hull edge to wall (design 5), m
+    wall_speed_mps: 0.3            # v_wall, m/s
+    odometry_timeout_s: 0.2        # t_odom, s
+    heartbeat_stop_s: 1.0          # t_hb_stop, s
+    heartbeat_abort_s: 5.0         # t_hb_abort, s
+    saturation_duration_s: 2.0     # t_sat, s
+    slow_speed_factor: 0.7         # replan at this fraction of v_cruise
+    battery_minimum: 0.20          # SOC_min, fraction (20 %)
+    mission_timeout_s: 120.0       # t_mission, s
+    sensor_max_age_s: 3.0          # battery / leak readings older than this are ignored, s; provisional
+    future_tolerance_s: 0.5        # stamps further ahead are ignored, s; provisional
+    terminal_pose_file: ""         # hull outline (empty: rov_planning default)
+    swimmer_prediction_file: ""    # track age limits (empty: rov_planning default)

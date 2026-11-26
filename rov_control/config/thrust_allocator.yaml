@@ -1,0 +1,42 @@
+# Parameters for thrust_allocator_node (rov_control).
+# Run with:
+#   ros2 run rov_control thrust_allocator_node --ros-args \
+#     --params-file $(ros2 pkg prefix rov_control)/share/rov_control/config/thrust_allocator.yaml
+#
+# Values and sources follow SURFACE_APPROACH_DESIGN.md sections 4, 6.2, 6.6.
+# "provisional" = placeholder until bench tests / identification replace it.
+
+thrust_allocator_node:
+  ros__parameters:
+    # Thruster positions and directions (base_link). Empty = the installed
+    # rov_description/config/thrusters_v4.yaml.
+    thruster_config_file: ""
+
+    # Per-thruster force limits, positive magnitudes in N.
+    max_forward_force_n: 140.0   # f_ctrl (design 6.2, set value); range > 0
+    max_reverse_force_n: 100.0   # f_rev is TBD (bench test); provisional; range > 0
+
+    # W, weight per wrench axis [Fx, Fy, Fz, Mx, My, Mz], each > 0.
+    # Fx, Fy, Mz = 1, 1, 2 from design 6.6.
+    # Fz, Mx, My = 1, 10, 10 are provisional (from the ROS 1 holo_control allocator).
+    wrench_weights: [1.0, 1.0, 1.0, 10.0, 10.0, 2.0]
+
+    # lambda, thrust-effort penalty (design 6.6); range >= 0.
+    regularization: 0.001
+
+    # A thruster within this many N of its limit counts as saturated; range >= 0.
+    saturation_tolerance_n: 0.001
+
+    # Allocation and publishing rate in Hz (design 4: 50 Hz); range > 0.
+    update_rate_hz: 50.0
+
+    # No wrench_command for this long (s) -> zero request -> zero thrust.
+    # Provisional; range > 0.
+    command_timeout_sec: 0.2
+
+    # Safety monitor (design 5): zero_thrust in a SafetyStatus at most this
+    # old forces all thruster forces to 0, s; > 0; provisional.
+    safety_status_max_age_s: 1.0
+    # Test hook: scales both force limits (1.0 = as configured), to provoke
+    # genuine saturation in scripted tests; in (0, 1].
+    test_force_limit_scale: 1.0

@@ -89,32 +89,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Angle Tolerance: 0.1
-      Class: rviz_default_plugins/Odometry
-      Covariance:
-        Value: false
-      Enabled: true
-      Keep: 100
-      Name: Odometry
-      Position Tolerance: 0.1
-      Shape:
-        Alpha: 1
-        Axes Length: 1
-        Axes Radius: 0.1
-        Color: 255; 25; 0
-        Head Length: 0.3
-        Head Radius: 0.1
-        Shaft Length: 1
-        Shaft Radius: 0.05
-        Value: Arrow
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /odom
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

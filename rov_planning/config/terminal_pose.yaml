@@ -1,0 +1,36 @@
+# Terminal pose of the surface approach (rov_planning, implementation step 8A).
+# Read with rov_planning::LoadTerminalPoseSettings(). Every key is required;
+# there are no defaults in the code for the geometry below.
+# Design: SURFACE_APPROACH_DESIGN.md section 3 item 1, tables 6.1 and 6.5.
+# Standoff d = bow_offset + stowed_arm_protrusion + victim_body_radius + gap:
+#   surface:   0.50 + 0.10 + 0.25 + 0.15 = 1.00 m
+#   submerged: 0.50 + 0.10 + 0.25 + 0.30 = 1.15 m
+# The pose is a staging point: deployed-arm reach and arm clearance still
+# need the arm CAD before these values are fixed.
+
+# Hull outline in base_link (x forward), m.
+bow_offset: 0.50              # x_bow: bow ahead of base_link (hull length 1.00 m / 2); > 0
+stern_offset: 0.50            # stern behind base_link; > 0 (clearance outline only)
+hull_half_width: 0.52         # half of the 1.04 m beam; > 0 (clearance outline only)
+
+# L_arm: how far the STOWED arms protrude beyond the bow. TBD from the arm
+# CAD. SIMULATION VALUE, provisional; must be set explicitly (null = error).
+stowed_arm_protrusion: 0.10   # m; >= 0
+
+# Victim and gaps (gap = stowed arm tips to the victim's body).
+victim_body_radius: 0.25      # r_body, m; > 0
+surface_gap: 0.15             # g_surface, m; >= 0; provisional simulation value
+dive_gap: 0.30                # g_dive, m; >= 0; provisional simulation value
+
+# Approach heading (bearing robot -> victim).
+heading_hold_distance: 2.0    # d_hold, m: held within standoff + this of the victim (FINAL_APPROACH); >= 0
+heading_reaim_angle: 0.15     # psi_reaim, rad: re-aim needs the bearing to differ more (= e_psi); 0 < value < pi
+heading_reaim_victim_shift: 0.3  # m: re-aim also needs the victim to have moved more than this since
+                              # the last lock or re-aim (= target-shift threshold dp_v); >= 0.
+                              # Robot motion alone never re-aims.
+heading_hold_hysteresis: 0.5  # d_hyst, m: released beyond standoff + d_hold + this; >= 0; provisional
+
+# Clearance check at the reached pose (separate from the 0.25 m / 0.15 rad
+# simulation acceptance limits and from the controller tolerances).
+min_victim_gap: 0.0           # g_min, m: stowed outline to victim body; >= 0; provisional
+wall_clearance: 0.5           # m: outline to blocked cells (design table 1); >= 0

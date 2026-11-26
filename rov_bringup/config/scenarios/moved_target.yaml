@@ -1,0 +1,21 @@
+# Step 8B: the victim moves 2 m (to map (0, 2)) 5 s into the approach. It
+# must be reached without stopping and verified against the moved target.
+
+base: baseline_submerged
+name: moved_target
+description: Target moved 2 m mid-run; reached without stopping.
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 0.0, y: 0.0}   # m, map frame
+  - at_s: 5.0                             # s after the first target
+    actions:
+      - victim_target: {x: 0.0, y: 2.0}
+
+expect:
+  reason: "latest victim \\(0.00, 2.00\\)"
+  reports_present: ["^REPLANNED \\(target moved\\)"]
+  limits:
+    cruise_min_speed_mps: {min: 0.5}     # m/s: no stop before the final approach
+    bow_error_rad: {max: 0.15}           # rad

@@ -1,0 +1,30 @@
+# Step 10 safety test (design 5): Rule 'mission timeout 120 s without arrival: abort, hold'. Every plan is forced to fail
+# (test hook), so the approach is rejected and the vehicle never arrives.
+# Expected: the rule triggers once and produces its specified action.
+
+base: mission_submerged
+name: safety_mission_timeout
+description: Safety rule test safety_mission_timeout.
+timeouts:
+  run_s: 160.0            # s: 120 s mission timeout + margin
+
+events:
+  - at_s: 0.0
+    actions:
+      - set_param: {node: trajectory_generator_node, name: force_optimizer_failures, value: 100000}
+      - shore_alarm: {x: 0.0, y: 0.0, state: submerged}
+end:
+  phase: SAFETY_STOP
+  after_phase: TRANSIT
+
+expect:
+  safety_rules: [mission_timeout]
+  phases: [TRANSIT, SAFETY_STOP]
+  reports_present:
+    - "SAFETY TRIGGER mission_timeout: .*abort, hold"
+    - "^MISSION .*TRANSIT -> SAFETY_STOP \\(abort"
+  reports_absent: []
+  status: rejected
+  reason: "consecutive planning failures"
+  limits: {}
+  required_topics: {}

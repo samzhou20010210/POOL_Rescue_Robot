@@ -1,0 +1,24 @@
+# Fake shore swimmers for scenario swimmers_1_shore (rov_simulation fake_shore_node).
+# One swimmer crosses the route 10 m along it at 0.5 m/s, reaching it at t = 8 s, when the robot does (simultaneous crossing).
+# Route: start map (-20.0, -7.5) -> terminal pose (-1.08, -0.40), direction
+# (0.936, 0.351); swimmers move across it (normal (-0.351, 0.936)).
+# Inactive until the scenario runner sets active:=true together with the
+# target, so swimmer times count from the target (s).
+
+fake_shore_node:
+  ros__parameters:
+    active: false
+    publish_rate_hz: 10.0      # f_swim (design 6.4), Hz
+    frame_id: map
+    position_noise_m: 0.05     # sigma_shore (design 6.4), m
+    velocity_noise_mps: 0.05   # m/s; provisional
+    random_seed: 42
+    swimmer_ids: [1]
+    swimmer_motions: ["straight"]
+    swimmer_start_x: [-9.232]          # m
+    swimmer_start_y: [-7.734]          # m
+    swimmer_velocity_x: [-0.176]      # m/s
+    swimmer_velocity_y: [0.468]      # m/s
+    swimmer_travel_m: [0.000]    # m (back_and_forth leg)
+    swimmer_start_time_s: [0.000] # s after activation
+    swimmer_lifetime_s: [20.000]    # s

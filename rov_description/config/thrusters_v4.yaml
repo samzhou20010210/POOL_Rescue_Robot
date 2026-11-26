@@ -11,10 +11,19 @@
 #
 # Horizontal thrusters (01-04) are vectored at 45 degrees in the x-y plane;
 # vertical thrusters (05-08) push along +z.
-# Dynamics parameters (thrust curves, limits, delays) are not set yet.
+# Thruster dynamics: see `dynamics` below (SURFACE_APPROACH_DESIGN.md 6.2).
+# Thrust-PWM curves and per-thruster polarity are not set yet.
 
 frame_id: base_link
 thruster_model: T500
+
+# Same values for all 8 thrusters. Forces are positive magnitudes in N.
+# null = TBD (code that needs the value must refuse to run).
+dynamics:
+  time_constant: 0.1           # tau_m, s, first-order thrust lag; estimate -> bench test; > 0
+  peak_forward_force: 158.0    # f_peak, N (16.1 kgf @ 24 V); manufacturer spec
+  peak_reverse_force: null     # f_rev, N; TBD (manufacturer curve -> bench test)
+  planning_force_limit: 110.0  # f_plan, N (~70% of peak); set value
 
 thrusters:
   thruster_01:

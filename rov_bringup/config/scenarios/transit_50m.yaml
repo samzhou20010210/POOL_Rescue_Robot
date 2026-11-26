@@ -1,0 +1,24 @@
+# Step 8B / design 1: full-length transit. The 50 m pool leaves room for
+# start map (-23.5, 0) -> terminal pose (21.85, 0): 45.35 m, the longest
+# straight approach possible with wall clearance. Limit: arrival <= 40 s
+# (design 1: 50 m in <= 40 s, so a shorter run must not take longer).
+
+base: baseline_submerged
+name: transit_50m
+description: Longest straight transit (45.35 m) along the pool centre line.
+
+launch:
+  arguments:
+    start_x: "1.5"        # m, pool world frame (= map -23.5)
+    start_y: "12.5"       # m, pool world frame (= map 0.0)
+    start_yaw: "0.0"      # rad
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 23.0, y: 0.0}   # m, map frame
+
+expect:
+  limits:
+    arrival_time_s: {max: 40.0}          # s, design 1
+    bow_error_rad: {max: 0.15}           # bow faces the victim (e_psi)

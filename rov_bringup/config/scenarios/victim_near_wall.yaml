@@ -1,0 +1,25 @@
+# Step 11 scenario: a reachable victim close to a wall, 1.7 m from the top
+# wall (map y = 12.5 m). The terminal pose keeps the 0.5 m wall clearance;
+# the full submerged mission must complete.
+
+base: mission_submerged
+name: victim_near_wall
+description: Full submerged mission to a victim 1.7 m from the top wall.
+
+events:
+  - at_s: 0.0
+    actions:
+      - shore_alarm: {x: 0.0, y: 10.8, state: submerged}   # m, map frame
+  - on_phase: DIVE_AND_GRASP
+    delay_s: 3.0                                           # s
+    actions:
+      - mission_event: {type: rescue_complete, detail: "victim lifted (simulated)"}
+
+expect:
+  reports_absent: ["SAFETY TRIGGER", "BRAKING", "CONTROLLER FAILED"]
+  limits:
+    replan_failures: {max: 1}            # recovered failures allowed (see below)
+  # Near the goal a warm replan can end marginally above v_max(d) (0.002 m/s
+  # seen in the Gazebo matrix run); the failure handling keeps the still-valid
+  # trajectory and retries at 0.7 v_cruise. Allowed: at most one such
+  # recovered failure, and no braking (as in the surface scenarios).

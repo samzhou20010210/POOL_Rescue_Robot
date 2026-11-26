@@ -1,0 +1,22 @@
+# Step 8B surface branch: surface victim at the pool centre. Within 2 m of
+# the terminal point the speed must stay at or below 0.3 m/s (design 3
+# item 5, measured from odometry); stops d_surface = 1.00 m short, bow-on.
+
+base: baseline_submerged
+name: surface_victim
+description: Surface victim at the pool centre; 0.3 m/s cap within 2 m.
+
+launch:
+  arguments:
+    victim_state: surface
+
+expect:
+  limits:
+    final_zone_max_speed_mps: {max: 0.3}  # m/s, v_final within d_final (design 6.5)
+    replan_failures: {max: 1}            # recovered failures allowed (see below)
+    bow_error_rad: {max: 0.15}           # rad
+  # Near the 0.3 m/s final zone a replan can end marginally above the speed
+  # envelope (about 0.007 m/s); the failure handling keeps the still-valid
+  # trajectory and retries. Allowed: at most one such recovered failure, and
+  # no braking (finding, see the step 8B status).
+  reports_absent: ["BRAKING", "CONTROLLER FAILED"]

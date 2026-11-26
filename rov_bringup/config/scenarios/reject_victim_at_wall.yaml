@@ -1,0 +1,24 @@
+# Step 11 expected-rejection scenario: a victim 0.2 m from the top wall
+# (map y = 12.5 m). The terminal pose fails the wall clearance gate before
+# any path is requested; the run passes only if the target is REJECTED for
+# that reason and nothing is planned.
+# Keys not given here come from `base` (deep merge; lists are replaced).
+
+base: baseline_submerged
+name: reject_victim_at_wall
+description: Victim 0.2 m from the top wall; expected REJECTED (wall clearance).
+
+timeouts:
+  run_s: 20.0             # s
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 0.0, y: 12.3}   # m, map frame
+
+expect:
+  status: rejected
+  reason: "fails clearance"
+  reports_absent: ["^PLANNED"]
+  limits: {}
+  required_topics: {}     # the default topics only (no controller feedback)

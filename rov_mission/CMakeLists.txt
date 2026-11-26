@@ -12,6 +12,43 @@ find_package(geometry_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(rov_interfaces REQUIRED)
+find_package(rov_planning REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+
+# Mission state machine (step 10): no ROS, used by tests now and by the
+# mission node later. The existing mission_node below is unchanged.
+add_library(mission_state_machine src/mission_state_machine.cpp)
+target_compile_features(mission_state_machine PUBLIC cxx_std_17)
+target_include_directories(mission_state_machine PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+
+# Safety rules (step 10, design 5): no ROS.
+add_library(safety_rules src/safety_rules.cpp)
+target_compile_features(safety_rules PUBLIC cxx_std_17)
+target_include_directories(safety_rules PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+target_link_libraries(safety_rules PUBLIC rov_planning::planning_core)
+
+# Independent safety monitor and the mission manager (step 10).
+add_executable(safety_monitor_node src/safety_monitor_node.cpp)
+target_compile_features(safety_monitor_node PUBLIC cxx_std_17)
+target_link_libraries(safety_monitor_node safety_rules rov_planning::planning_core
+  ament_index_cpp::ament_index_cpp rclcpp::rclcpp tf2::tf2 tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs
+  ${nav_msgs_TARGETS} ${rov_interfaces_TARGETS} ${sensor_msgs_TARGETS} ${std_msgs_TARGETS})
+
+add_executable(mission_manager_node src/mission_manager_node.cpp)
+target_compile_features(mission_manager_node PUBLIC cxx_std_17)
+target_link_libraries(mission_manager_node mission_state_machine rov_planning::planning_core
+  ament_index_cpp::ament_index_cpp rclcpp::rclcpp tf2::tf2 tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs
+  ${geometry_msgs_TARGETS} ${nav_msgs_TARGETS} ${rov_interfaces_TARGETS} ${std_msgs_TARGETS})
 
 add_executable(mission_node src/mission_node.cpp)
 target_include_directories(mission_node PUBLIC
@@ -27,8 +64,16 @@ ament_target_dependencies(
   "nav_msgs"
 )
 
-install(TARGETS mission_node
+install(TARGETS mission_node safety_monitor_node mission_manager_node
   DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME})
+install(TARGETS mission_state_machine safety_rules
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+install(DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -40,6 +85,12 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_mission_state_machine test/test_mission_state_machine.cpp)
+  target_link_libraries(test_mission_state_machine mission_state_machine)
+  ament_add_gtest(test_safety_rules test/test_safety_rules.cpp)
+  target_link_libraries(test_safety_rules safety_rules)
 endif()
 
 ament_package()

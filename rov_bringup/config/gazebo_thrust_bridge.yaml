@@ -1,0 +1,28 @@
+# ros_gz_bridge topics for thrust_sim.launch.py backend:=gazebo.
+# ROS names are relative (resolved in the bridge's namespace, "/" by default).
+# Thruster commands do not go through this bridge: ThrusterCommand is a custom
+# message, so gazebo_thruster_relay (rov_simulation) forwards it to Gazebo.
+
+# Gazebo simulation time -> ROS. The relay and the tests use it (use_sim_time).
+- ros_topic_name: "clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+# The ROV's motion -> ROS odometry (frame odom = Gazebo world, child base_link).
+# This is the only pose feedback in this mode.
+# Odometry and TF go to gz_odom / gz_tf; gazebo_thruster_relay republishes
+# them as odom / tf (test hook: publish_odometry).
+- ros_topic_name: "gz_odom"
+  gz_topic_name: "/model/rov_v4/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# The same pose as the odom -> base_link transform.
+- ros_topic_name: "gz_tf"
+  gz_topic_name: "/model/rov_v4/odometry_tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS

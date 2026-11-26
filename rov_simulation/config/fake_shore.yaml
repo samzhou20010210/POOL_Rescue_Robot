@@ -1,0 +1,24 @@
+# Parameters for fake_shore_node (rov_simulation, implementation step 9):
+# simulated non-target swimmer tracks on "swimmer_tracks".
+# One entry per swimmer in every swimmer_* array (same order, same length).
+# Coordinates are in frame_id (the pool-centred map frame).
+
+fake_shore_node:
+  ros__parameters:
+    publish_rate_hz: 10.0      # f_swim (design 6.4), Hz; > 0
+    frame_id: map
+    position_noise_m: 0.05     # sigma_shore (design 6.4), m; 0 = no noise
+    velocity_noise_mps: 0.05   # m/s; 0 = no noise; provisional
+    random_seed: 42            # fixed seed: repeatable noise
+
+    # Default scenario: one swimmer crossing the pool's centre line
+    # (y = 0) near x = -10 m, heading +y at 0.5 m/s for 12 s.
+    swimmer_ids: [1]
+    swimmer_motions: ["straight"]   # "straight" or "back_and_forth"
+    swimmer_start_x: [-10.0]        # m
+    swimmer_start_y: [-6.0]         # m
+    swimmer_velocity_x: [0.0]       # m/s
+    swimmer_velocity_y: [0.5]       # m/s
+    swimmer_travel_m: [0.0]         # m, back_and_forth leg length (unused for straight)
+    swimmer_start_time_s: [0.0]     # s after the node starts
+    swimmer_lifetime_s: [12.0]      # s; <= 0: forever (the track then never ends)

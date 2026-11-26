@@ -1,0 +1,35 @@
+# Step 5 acceptance: the trajectory controller follows a 20 m straight line at 1.5 m/s
+# (smooth ramps, peak acceleration 1.5 m/s^2), sent straight to the
+# controller by the scenario runner (the step 5 Path converter is retired).
+# Model feedforward ON.
+
+base: baseline_submerged
+name: controller_line_ff
+description: Controller test, 20 m straight line at 1.5 m/s, feedforward on.
+
+launch:
+  arguments:
+    use_feedforward: "true"
+
+timeouts:
+  run_s: 60.0             # s
+
+events:
+  - at_s: 0.0
+    actions:
+      - controller_trajectory: {shape: line, speed: 1.5, x: -20.0, y: -7.5, yaw: 0.0}  # m/s, m, rad
+
+end:
+  report: "^(ACCEPTED|NOT ACCEPTED)"
+
+expect:
+  status: accepted
+  reason: "reached the end and stopped"
+  limits:
+    tracking_rms_m: {max: 0.15}          # m, step 5
+    tracking_max_m: {max: 0.3}           # m, step 5
+    terminal_error_m: {max: 0.15}        # m, step 5 (controller tolerance)
+    terminal_yaw_error_rad: {max: 0.1}   # rad, step 5
+  reports_absent: []
+  required_topics:
+    /follow_trajectory/_action/feedback: 10

@@ -3,11 +3,12 @@
 <package format="3">
   <name>rov_control</name>
   <version>0.0.0</version>
-  <description>Simple controller that drives the planar simulator along a path (FollowPath action).</description>
+  <description>ROV control: path follower (FollowPath, velocity commands), trajectory tracking controller (FollowTrajectory, PD + model feedforward, wrench output), thrust allocator (wrench to 8 thruster forces), and the shared planar hydrodynamic model.</description>
   <maintainer email="samzhou20010210@gmail.com">sam</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
@@ -17,7 +18,15 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>eigen</depend>
+  <depend>rov_description</depend>
+  <depend>rov_interfaces</depend>
+  <depend>std_msgs</depend>
+  <depend>yaml-cpp</depend>
 
+  <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

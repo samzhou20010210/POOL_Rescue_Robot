@@ -6,8 +6,12 @@ find_package(ament_cmake REQUIRED)
 # Install launch files, RViz configs, Nav2 parameters, maps, and Gazebo
 # worlds and models into share/rov_bringup/ so "ros2 launch rov_bringup ..."
 # can find them.
-install(DIRECTORY launch rviz config maps worlds models
+install(DIRECTORY launch rviz config maps worlds models doc
   DESTINATION share/${PROJECT_NAME})
+
+# Scenario runner and offline bag -> metrics CSV (step 11).
+install(PROGRAMS scripts/run_scenario.py scripts/bag_to_metrics.py
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

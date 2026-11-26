@@ -3,17 +3,38 @@
 <package format="3">
   <name>rov_simulation</name>
   <version>0.0.0</version>
-  <description>Simple planar simulator: integrates cmd_vel and publishes odom and the odom to base_link TF.</description>
+  <description>Planar simulators: sim_node integrates cmd_vel kinematically; dynamics_sim_node applies thruster forces to a hydrodynamic model. Both publish odom and the odom to base_link TF.</description>
   <maintainer email="samzhou20010210@gmail.com">sam</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2_msgs</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>eigen</depend>
+  <depend>rov_control</depend>
+  <depend>rov_description</depend>
+  <depend>rov_interfaces</depend>
+  <depend>std_srvs</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>yaml-cpp</depend>
+  <depend>gz_msgs_vendor</depend>
+  <depend>gz_plugin_vendor</depend>
+  <depend>gz_sim_vendor</depend>
+  <depend>gz_transport_vendor</depend>
 
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

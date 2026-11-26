@@ -1,0 +1,26 @@
+# Step 8B failure handling (design 3 item 7): three forced optimizer
+# failures in a row 5 s into the approach. The vehicle brakes to a stop
+# along its path and holds, retries, then completes the approach.
+
+base: baseline_submerged
+name: forced_failure_brake
+description: Three forced optimizer failures; brake, hold, then resume.
+
+timeouts:
+  run_s: 90.0             # s
+
+events:
+  - at_s: 0.0
+    actions:
+      - victim_target: {x: 0.0, y: 0.0}   # m, map frame
+  - at_s: 5.0
+    actions:
+      - set_param: {node: trajectory_generator_node, name: force_optimizer_failures, value: 3}
+
+expect:
+  reports_present:
+    - "failure 3 of 3\\]: braking to a stop and holding"
+    - "^BRAKING: 3 consecutive planning failures"
+    - "^HOLDING: stopped"
+    - "^REPLANNED \\(retry\\)"
+  reports_absent: ["CONTROLLER FAILED"]
